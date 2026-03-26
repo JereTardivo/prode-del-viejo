@@ -57,7 +57,7 @@ function buildSeason(sid, data, prefix) {
   const top5El = document.getElementById(prefix + '-top5');
   if (top5El) {
     top5El.innerHTML = top5.map((x, i) => `
-      <tr>
+      <tr style="animation:fadeIn 0.3s ease both;animation-delay:${0.05 + i * 0.07}s">
         <td><span class="rnum ${['r1','r2','r3','rx','rx'][i]}">${i + 1}</span></td>
         <td>${x.name}</td>
         <td><span class="chip chip-g">${fmtM(x.saldo)}</span></td>
@@ -68,7 +68,7 @@ function buildSeason(sid, data, prefix) {
   const bot5El = document.getElementById(prefix + '-bot5');
   if (bot5El) {
     bot5El.innerHTML = bot5.map((x, i) => `
-      <tr>
+      <tr style="animation:fadeIn 0.3s ease both;animation-delay:${0.05 + i * 0.07}s">
         <td><span class="rnum rx">${p.length - i}</span></td>
         <td>${x.name}</td>
         <td><span class="chip chip-r">${fmtM(x.saldo)}</span></td>
@@ -79,10 +79,10 @@ function buildSeason(sid, data, prefix) {
   // ── BARS ──
   const barsEl = document.getElementById(prefix + '-bars');
   if (barsEl) {
-    barsEl.innerHTML = sorted.map(x => {
+    barsEl.innerHTML = sorted.map((x, i) => {
       const pct = (Math.abs(x.saldo) / maxAbs) * 100;
       const pos = x.saldo >= 0;
-      return `<div class="brow">
+      return `<div class="brow" style="animation-delay:${i * 0.04}s">
         <div class="bname">${x.name}</div>
         <div class="btrack"><div class="bfill ${pos ? 'p' : 'n'}" style="width:${pct}%"></div></div>
         <div class="bval ${pos ? 'p' : 'n'}">${fmtM(x.saldo)}</div>
@@ -93,15 +93,17 @@ function buildSeason(sid, data, prefix) {
   // ── FECHAS GRID ──
   const fechasEl = document.getElementById(prefix + '-fechas');
   if (fechasEl) {
-    fechasEl.innerHTML = data.fechas.map(f => {
+    fechasEl.innerHTML = data.fechas.map((f, i) => {
       const label = typeof f.num === 'number' ? 'FECHA ' + f.num : f.num.toUpperCase();
+      const delay = `animation-delay:${i * 0.05}s`;
       if (!f.g.length && !f.p.length) return `
-        <div class="fcard">
+        <div class="fcard" style="${delay}">
           <div class="fnum">${label}</div>
           <div style="color:var(--muted);font-size:12px;text-align:center;padding:12px 0">Sin datos</div>
         </div>`;
       const gm = data.gmonto[f.num] || 0;
-      let html = `<div class="fcard"><div class="fnum" style="margin-bottom:10px">${label}</div>`;
+      const fcClass = f.g.length > 1 ? 'fc-multi' : 'fc-win';
+      let html = `<div class="fcard ${fcClass}" style="${delay}"><div class="fnum" style="margin-bottom:10px">${label}</div>`;
       if (f.g.length) {
         html += `<div class="fgroup-label g">Ganadores</div>`;
         f.g.forEach(w => {
