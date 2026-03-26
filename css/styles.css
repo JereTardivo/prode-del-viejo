@@ -43,17 +43,22 @@ body::before{
   display:flex;flex-direction:column;gap:4px;
 }
 .cup-name{
-  font-family:'Anton',sans-serif;
-  font-size:clamp(32px,5vw,58px);
-  letter-spacing:3px;
-  line-height:1;
-  background: linear-gradient(135deg, var(--gold) 0%, #fff8dc 50%, var(--gold2) 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  text-shadow:none;
+  font-family:'Rye',serif;
+  font-size:clamp(28px,4.5vw,54px);
+  letter-spacing:2px;
+  line-height:1.05;
+  color:#d4a843;
+  text-shadow:
+    2px 2px 0px #1a0e00,
+    4px 4px 8px rgba(0,0,0,0.7),
+    0 0 40px rgba(180,120,20,0.2);
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));
 }
 .cup-sub{
-  font-size:11px;letter-spacing:3px;text-transform:uppercase;
-  color:var(--muted);margin-top:2px;
+  font-family:'Syne',sans-serif;
+  font-size:10px;letter-spacing:4px;text-transform:uppercase;
+  color:var(--muted);margin-top:4px;
+  opacity:0.85;
 }
 
 /* SEASON SELECTOR */
