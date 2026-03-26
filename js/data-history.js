@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════
 const data2026a = {
   cupName: 'Copa Pautasso-Ellena',
-  penalidad: 15000,
+  penalidad: 20000,
   baseFee: 7000,
   participants: [
     { name:"Agustin Ellena",        saldo:  82000, primero:1, ultimo:0 },
@@ -13,10 +13,10 @@ const data2026a = {
     { name:"Daniel Iglesias",       saldo:  83000, primero:1, ultimo:0 },
     { name:"Jere Tardivo",          saldo: -77000, primero:0, ultimo:0 },
     { name:"Jorge Alvarez",         saldo: -96000, primero:0, ultimo:2 },
-    { name:"Leandro Peralta",       saldo: -90000, primero:0, ultimo:0 },
+    { name:"Leandro Peralta",       saldo: -90000, primero:0, ultimo:1 },
     { name:"Mario Figueroa",        saldo:  63000, primero:1, ultimo:1 },
     { name:"Matias Muller",         saldo: -39000, primero:1, ultimo:1 },
-    { name:"Matias Pautasso",       saldo: -39000, primero:1, ultimo:1 },
+    { name:"Matias Pautasso",       saldo: -39000, primero:1, ultimo:0 },
     { name:"Nicolas Perez",         saldo:  63000, primero:1, ultimo:2 },
     { name:"Pablo Benati",          saldo: -77000, primero:0, ultimo:0 },
     { name:"Patricio Vera",         saldo:  63000, primero:1, ultimo:1 },
@@ -62,7 +62,7 @@ const data2026a = {
     { name:"Quequi Linares",        f:[0,-20,-7,-20,0,66,0,-7,0,-7,-7,-7] },
     { name:"Rencuata F.C.",         f:[-7,-7,0,-7,-7,66,-7,-7,0,-7,-7,-7] },
     { name:"Rodrigo Becerra",       f:[139,-7,-7,-7,-7,-7,-7,-7,0,-7,-7,-7] },
-    { name:"ROLO FC",               f:[-7,-7,-7,-7,-7,0,-7,-20,0,146,-7,-7] },
+    { name:"ROLO FC",               f:[-7,-7,-7,-7,-7,0,-7,-20,0,-7,146,-7] },
     { name:"Santiago Quiroga",      f:[-20,-7,-7,-7,-7,-7,-7,-7,0,-7,-7,-7] },
     { name:"Santiago Spannagel",    f:[-7,-20,-7,-7,-7,-7,139,44,0,-7,-7,165] },
     { name:"Joaquin Sassi",         f:[0,0,0,0,0,0,0,0,0,-7,-7,-7] },
