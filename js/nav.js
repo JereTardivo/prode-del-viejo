@@ -7,7 +7,7 @@ function showSeason(id, btn) {
   document.getElementById(id).classList.add('active');
   btn.classList.add('active');
   document.querySelector('.cup-sub').textContent =
-    (cupMap[id] || id).toUpperCase() + ' · Liga de Fútbol Fantasía';
+    (cupMap[id] || id).toUpperCase();
 }
 
 function showITab(btn, seasonId, tab) {
