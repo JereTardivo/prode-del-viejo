@@ -1,0 +1,9 @@
+{
+  "rules": {
+    ".read": true,
+    ".write": false,
+    "prode_fechas": {
+      ".write": "auth != null"
+    }
+  }
+}
