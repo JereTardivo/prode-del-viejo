@@ -13,7 +13,7 @@ function hideLoadingOverlay() {
 buildSeason('s2026a', data2026a, '2026a');
 buildSeason('s2025c', data2025c, '2025c');
 buildSeason('s2025a', data2025a, '2025a');
-buildSeason('s2024',  data2024,  '2024');
+buildSeason('s2024', data2024, '2024');
 
 // Connect Firebase and overlay with live data
 startFirebaseListener();

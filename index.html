@@ -1,334 +1,492 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>El PRODE del Viejo</title>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Rye&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css">
-<link rel="icon" type="image/png" href="prodeviejo.png">
 
-<!-- Firebase SDK (compat) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>El PRODE del Viejo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Rye&family=Syne:wght@400;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" type="image/png" href="prodeviejo.png">
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 </head>
+
 <body>
 
-<!-- LOADING OVERLAY -->
-<div id="loading-overlay">
-  <div class="loader-ring"></div>
-  <div class="loader-text">Cargando datos...</div>
-</div>
+  <!-- LOADING OVERLAY -->
+  <div id="loading-overlay">
+    <div class="loader-ring"></div>
+    <div class="loader-text">Cargando datos...</div>
+  </div>
 
-<!-- ═══════════════ MASTHEAD ═══════════════ -->
-<div class="masthead">
-  <div class="masthead-inner">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
-      <div style="display:flex;align-items:center;gap:16px;min-width:0">
-        <img src="prodeviejo.png" alt="Logo" class="logo-img">
-        <div>
-        <div class="cup-name">El PRODE del Viejo</div>
-        <div class="cup-sub">Copa Pautasso-Ellena · Apertura 2026</div>
+  <!-- ═══════════════ MASTHEAD ═══════════════ -->
+  <div class="masthead">
+    <div class="masthead-inner">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+        <div style="display:flex;align-items:center;gap:16px;min-width:0">
+          <img src="prodeviejo.png" alt="Logo" class="logo-img">
+          <div>
+            <div class="cup-name">El PRODE del Viejo</div>
+            <div class="cup-sub">Copa Pautasso-Ellena · Apertura 2026</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0;align-items:stretch">
+          <button class="stats-global-btn" onclick="showGlobal()">
+            <span style="font-size:18px">🏆</span>
+            <span class="btn-label">Estadísticas Globales</span>
+          </button>
+          <button class="admin-icon-btn" onclick="showAdmin()" title="Admin">⚙️</button>
         </div>
       </div>
-      <div style="display:flex;gap:8px;flex-shrink:0;align-items:stretch">
-        <button class="stats-global-btn" onclick="showGlobal()">
-          <span style="font-size:18px">🏆</span>
-          <span class="btn-label">Estadísticas Globales</span>
+
+      <div class="season-nav">
+        <button class="season-btn active" onclick="showSeason('s2026a',this)">
+          Apertura 2026
+          <span class="badge-new">ACTUAL</span>
         </button>
-        <button class="admin-icon-btn" onclick="showAdmin()" title="Admin">⚙️</button>
-      </div>
-    </div>
-
-    <div class="season-nav">
-      <button class="season-btn active" onclick="showSeason('s2026a',this)">
-        Apertura 2026
-        <span class="badge-new">ACTUAL</span>
-      </button>
-      <button class="season-btn" onclick="showSeason('s2025c',this)">Clausura 2025</button>
-      <button class="season-btn" onclick="showSeason('s2025a',this)">Apertura 2025</button>
-      <button class="season-btn" onclick="showSeason('s2024',this)">Liga 2024</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════ MODAL GLOBAL ═══════════════ -->
-<div id="global-modal" class="gmodal-backdrop" onclick="hideGlobal(event)">
-  <div class="gmodal">
-    <div class="gmodal-head">
-      <div class="gmodal-title">Estadísticas Globales</div>
-      <div class="gmodal-sub">Todas las temporadas</div>
-      <button class="gmodal-close" onclick="hideGlobal()">✕</button>
-    </div>
-    <div class="gmodal-body">
-      <div class="stats-row" id="global-stats" style="margin-bottom:24px"></div>
-      <div class="two-col" style="margin-bottom:16px">
-        <div class="section">
-          <div class="sh">Ranking General · Saldo Total</div>
-          <table class="rtable"><thead><tr>
-            <th>#</th><th>Participante</th><th>Saldo Total</th><th>Temporadas</th>
-          </tr></thead><tbody id="global-ranking"></tbody></table>
-        </div>
-        <div class="section">
-          <div class="sh">Victorias y Derrotas Históricas</div>
-          <table class="rtable"><thead><tr>
-            <th>#</th><th>Participante</th><th>🥇 1°</th><th>💀 Últ</th><th>Ratio</th>
-          </tr></thead><tbody id="global-wins"></tbody></table>
-        </div>
-      </div>
-      <div class="section">
-        <div class="sh">Saldo Total por Participante</div>
-        <div id="global-bars"></div>
+        <button class="season-btn" onclick="showSeason('s2025c',this)">Clausura 2025</button>
+        <button class="season-btn" onclick="showSeason('s2025a',this)">Apertura 2025</button>
+        <button class="season-btn" onclick="showSeason('s2024',this)">Liga 2024</button>
       </div>
     </div>
   </div>
-</div>
 
-<!-- ═══════════════ MODAL ADMIN LOGIN ═══════════════ -->
-<div id="admin-login-modal" class="gmodal-backdrop" onclick="hideAdminLogin(event)">
-  <div class="gmodal" style="max-width:380px">
-    <div class="gmodal-head">
-      <div class="gmodal-title" style="color:var(--cyan)">⚙️ Admin</div>
-      <button class="gmodal-close" onclick="hideAdminLogin()">✕</button>
-    </div>
-    <div class="gmodal-body" style="padding:28px 24px">
-      <div id="admin-login-err" style="display:none;color:var(--red);font-size:13px;margin-bottom:12px;padding:8px 12px;background:rgba(248,113,113,0.1);border-radius:8px;border:1px solid rgba(248,113,113,0.2)"></div>
-      <div style="margin-bottom:14px">
-        <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Email</div>
-        <input id="admin-email" type="email" placeholder="admin@prode.com"
-          style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none"
-          onkeydown="if(event.key==='Enter')doLogin()">
+  <!-- ═══════════════ MODAL GLOBAL ═══════════════ -->
+  <div id="global-modal" class="gmodal-backdrop" onclick="hideGlobal(event)">
+    <div class="gmodal">
+      <div class="gmodal-head">
+        <div class="gmodal-title">Estadísticas Globales</div>
+        <div class="gmodal-sub">Todas las temporadas</div>
+        <button class="gmodal-close" onclick="hideGlobal()">✕</button>
       </div>
-      <div style="margin-bottom:20px">
-        <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Contraseña</div>
-        <input id="admin-pass" type="password" placeholder="••••••••"
-          style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none"
-          onkeydown="if(event.key==='Enter')doLogin()">
-      </div>
-      <button id="admin-login-btn" onclick="doLogin()"
-        style="width:100%;padding:12px;background:linear-gradient(135deg,rgba(56,189,248,0.2),rgba(56,189,248,0.08));border:1px solid rgba(56,189,248,0.4);border-radius:10px;color:var(--cyan);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer">
-        Ingresar
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════ MODAL ADMIN PANEL ═══════════════ -->
-<div id="admin-panel-modal" class="gmodal-backdrop" onclick="hideAdminPanel(event)">
-  <div class="gmodal" style="max-width:700px">
-    <div class="gmodal-head">
-      <div>
-        <div class="gmodal-title" style="color:var(--cyan)">⚙️ Panel Admin</div>
-        <div class="gmodal-sub">
-          Sesión: <span id="admin-user-display" style="color:var(--cyan)"></span>
-        </div>
-      </div>
-      <button onclick="doLogout()"
-        style="margin-left:auto;margin-right:8px;padding:6px 14px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:8px;color:var(--red);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer">
-        Cerrar sesión
-      </button>
-      <button class="gmodal-close" onclick="hideAdminPanel()">✕</button>
-    </div>
-    <div class="gmodal-body">
-
-      <!-- Selector de temporada -->
-      <div style="margin-bottom:20px">
-        <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Temporada</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="admin-season-btn active" data-s="s2026a" onclick="selectAdminSeason(this)">Apertura 2026</button>
-          <button class="admin-season-btn" data-s="s2025c" onclick="selectAdminSeason(this)">Clausura 2025</button>
-          <button class="admin-season-btn" data-s="s2025a" onclick="selectAdminSeason(this)">Apertura 2025</button>
-          <button class="admin-season-btn" data-s="s2024" onclick="selectAdminSeason(this)">Liga 2024</button>
-        </div>
-      </div>
-
-      <!-- Fechas guardadas -->
-      <div style="margin-bottom:20px">
-        <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Fechas guardadas en Firebase</div>
-        <div id="admin-saved-list" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px"></div>
-      </div>
-
-      <!-- Formulario nueva fecha -->
-      <div class="section" style="margin-bottom:0">
-        <div class="sh">Agregar / Editar Fecha</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-          <div>
-            <div class="admin-label">Número / Nombre de Fecha</div>
-            <input id="af-num" type="text" placeholder="ej: 13  ó  8vo Final" class="admin-input">
+      <div class="gmodal-body">
+        <div class="stats-row" id="global-stats" style="margin-bottom:24px"></div>
+        <div class="two-col" style="margin-bottom:16px">
+          <div class="section">
+            <div class="sh">Ranking General · Saldo Total</div>
+            <table class="rtable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Participante</th>
+                  <th>Saldo Total</th>
+                  <th>Temporadas</th>
+                </tr>
+              </thead>
+              <tbody id="global-ranking"></tbody>
+            </table>
           </div>
-          <div>
-            <div class="admin-label">Premio ganador ($)</div>
-            <input id="af-monto" type="number" placeholder="ej: 139000" class="admin-input">
+          <div class="section">
+            <div class="sh">Victorias y Derrotas Históricas</div>
+            <table class="rtable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Participante</th>
+                  <th>🥇 1°</th>
+                  <th>💀 Últ</th>
+                  <th>Ratio</th>
+                </tr>
+              </thead>
+              <tbody id="global-wins"></tbody>
+            </table>
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-          <div>
-            <div class="admin-label">Ganadores (uno por línea)</div>
-            <textarea id="af-ganadores" class="admin-textarea" placeholder="Santiago Spannagel&#10;Matias Muller"></textarea>
+        <div class="section">
+          <div class="sh">Saldo Total por Participante</div>
+          <div id="global-bars"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ MODAL ADMIN LOGIN ═══════════════ -->
+  <div id="admin-login-modal" class="gmodal-backdrop" onclick="hideAdminLogin(event)">
+    <div class="gmodal" style="max-width:380px">
+      <div class="gmodal-head">
+        <div class="gmodal-title" style="color:var(--cyan)">⚙️ Admin</div>
+        <button class="gmodal-close" onclick="hideAdminLogin()">✕</button>
+      </div>
+      <div class="gmodal-body" style="padding:28px 24px">
+        <div id="admin-login-err"
+          style="display:none;color:var(--red);font-size:13px;margin-bottom:12px;padding:8px 12px;background:rgba(248,113,113,0.1);border-radius:8px;border:1px solid rgba(248,113,113,0.2)">
+        </div>
+        <div style="margin-bottom:14px">
+          <div
+            style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">
+            Email</div>
+          <input id="admin-email" type="email" placeholder="admin@prode.com"
+            style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none"
+            onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
+        <div style="margin-bottom:20px">
+          <div
+            style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">
+            Contraseña</div>
+          <input id="admin-pass" type="password" placeholder="••••••••"
+            style="width:100%;background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none"
+            onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
+        <button id="admin-login-btn" onclick="doLogin()"
+          style="width:100%;padding:12px;background:linear-gradient(135deg,rgba(56,189,248,0.2),rgba(56,189,248,0.08));border:1px solid rgba(56,189,248,0.4);border-radius:10px;color:var(--cyan);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer">
+          Ingresar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ MODAL ADMIN PANEL ═══════════════ -->
+  <div id="admin-panel-modal" class="gmodal-backdrop" onclick="hideAdminPanel(event)">
+    <div class="gmodal" style="max-width:700px">
+      <div class="gmodal-head">
+        <div>
+          <div class="gmodal-title" style="color:var(--cyan)">⚙️ Panel Admin</div>
+          <div class="gmodal-sub">
+            Sesión: <span id="admin-user-display" style="color:var(--cyan)"></span>
           </div>
-          <div>
-            <div class="admin-label">Perdedores (uno por línea)</div>
-            <textarea id="af-perdedores" class="admin-textarea" placeholder="ROLO FC&#10;Jorge Alvarez"></textarea>
+        </div>
+        <button onclick="doLogout()"
+          style="margin-left:auto;margin-right:8px;padding:6px 14px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:8px;color:var(--red);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer">
+          Cerrar sesión
+        </button>
+        <button class="gmodal-close" onclick="hideAdminPanel()">✕</button>
+      </div>
+      <div class="gmodal-body">
+
+        <!-- Selector de temporada -->
+        <div style="margin-bottom:20px">
+          <div
+            style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">
+            Temporada</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="admin-season-btn active" data-s="s2026a" onclick="selectAdminSeason(this)">Apertura
+              2026</button>
+            <button class="admin-season-btn" data-s="s2025c" onclick="selectAdminSeason(this)">Clausura 2025</button>
+            <button class="admin-season-btn" data-s="s2025a" onclick="selectAdminSeason(this)">Apertura 2025</button>
+            <button class="admin-season-btn" data-s="s2024" onclick="selectAdminSeason(this)">Liga 2024</button>
           </div>
         </div>
-        <div id="admin-save-msg" style="display:none;color:var(--green);font-size:13px;margin-bottom:10px">✓ Guardado correctamente</div>
-        <div style="display:flex;gap:10px">
-          <button onclick="saveFecha()"
-            style="flex:1;padding:11px;background:linear-gradient(135deg,rgba(74,222,128,0.15),rgba(74,222,128,0.05));border:1px solid rgba(74,222,128,0.4);border-radius:10px;color:var(--green);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer">
-            💾 Guardar Fecha
-          </button>
-          <button onclick="clearAdminForm()"
-            style="padding:11px 20px;background:var(--s3);border:1px solid var(--border);border-radius:10px;color:var(--text2);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer">
-            Limpiar
-          </button>
+
+        <!-- Fechas guardadas -->
+        <div style="margin-bottom:20px">
+          <div
+            style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">
+            Fechas guardadas en Firebase</div>
+          <div id="admin-saved-list" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px"></div>
         </div>
+
+        <!-- Formulario nueva fecha -->
+        <div class="section" style="margin-bottom:0">
+          <div class="sh">Agregar / Editar Fecha</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+            <div>
+              <div class="admin-label">Número / Nombre de Fecha</div>
+              <input id="af-num" type="text" placeholder="ej: 13  ó  8vo Final" class="admin-input">
+            </div>
+            <div>
+              <div class="admin-label">Premio ganador ($)</div>
+              <input id="af-monto" type="number" placeholder="ej: 139000" class="admin-input">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+            <div>
+              <div class="admin-label">Ganadores (uno por línea)</div>
+              <textarea id="af-ganadores" class="admin-textarea"
+                placeholder="Santiago Spannagel&#10;Matias Muller"></textarea>
+            </div>
+            <div>
+              <div class="admin-label">Perdedores (uno por línea)</div>
+              <textarea id="af-perdedores" class="admin-textarea" placeholder="ROLO FC&#10;Jorge Alvarez"></textarea>
+            </div>
+          </div>
+          <div id="admin-save-msg" style="display:none;color:var(--green);font-size:13px;margin-bottom:10px">✓ Guardado
+            correctamente</div>
+          <div style="display:flex;gap:10px">
+            <button onclick="saveFecha()"
+              style="flex:1;padding:11px;background:linear-gradient(135deg,rgba(74,222,128,0.15),rgba(74,222,128,0.05));border:1px solid rgba(74,222,128,0.4);border-radius:10px;color:var(--green);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer">
+              💾 Guardar Fecha
+            </button>
+            <button onclick="clearAdminForm()"
+              style="padding:11px 20px;background:var(--s3);border:1px solid var(--border);border-radius:10px;color:var(--text2);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer">
+              Limpiar
+            </button>
+          </div>
+        </div>
+
       </div>
-
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════ MAIN CONTENT ═══════════════ -->
-<div class="main">
-
-  <!-- ──────── APERTURA 2026 ──────── -->
-  <div id="s2026a" class="season-panel active">
-    <div class="itabs">
-      <button class="itab active" onclick="showITab(this,'s2026a','resumen')">Resumen</button>
-      <button class="itab" onclick="showITab(this,'s2026a','saldos')">Saldos</button>
-      <button class="itab" onclick="showITab(this,'s2026a','fechas')">Fechas</button>
-      <button class="itab" onclick="showITab(this,'s2026a','completa')">Tabla Completa</button>
-    </div>
-    <div class="itab-panel s2026a active" data-tab="resumen">
-      <div class="stats-row" id="2026a-stats"></div>
-      <div class="two-col">
-        <div class="section">
-          <div class="sh">Top 5 Ganadores</div>
-          <table class="rtable"><thead><tr><th>#</th><th>Participante</th><th>Saldo</th><th>1°</th></tr></thead><tbody id="2026a-top5"></tbody></table>
-        </div>
-        <div class="section">
-          <div class="sh">Zona de Descenso</div>
-          <table class="rtable"><thead><tr><th>#</th><th>Participante</th><th>Saldo</th><th>Últ</th></tr></thead><tbody id="2026a-bot5"></tbody></table>
-        </div>
-      </div>
-    </div>
-    <div class="itab-panel s2026a" data-tab="saldos" style="display:none">
-      <div class="section"><div class="sh">Saldo Acumulado por Participante</div><div id="2026a-bars"></div></div>
-    </div>
-    <div class="itab-panel s2026a" data-tab="fechas" style="display:none">
-      <div class="section"><div class="sh">Resultados por Fecha</div><div class="fgrid" id="2026a-fechas"></div></div>
-    </div>
-    <div class="itab-panel s2026a" data-tab="completa" style="display:none">
-      <div class="section"><div class="sh">Tabla de Resultados Detallada</div><div class="ftable-wrap"><table class="ftable" id="2026a-full"></table></div></div>
-    </div>
-  </div>
-
-  <!-- ──────── CLAUSURA 2025 ──────── -->
-  <div id="s2025c" class="season-panel">
-    <div class="itabs">
-      <button class="itab active" onclick="showITab(this,'s2025c','resumen')">Resumen</button>
-      <button class="itab" onclick="showITab(this,'s2025c','saldos')">Saldos</button>
-      <button class="itab" onclick="showITab(this,'s2025c','fechas')">Fechas</button>
-      <button class="itab" onclick="showITab(this,'s2025c','completa')">Tabla Completa</button>
-    </div>
-    <div class="itab-panel s2025c active" data-tab="resumen">
-      <div class="stats-row" id="2025c-stats"></div>
-      <div class="two-col">
-        <div class="section">
-          <div class="sh">Top 5 Ganadores</div>
-          <table class="rtable"><thead><tr><th>#</th><th>Participante</th><th>Saldo</th><th>1°</th></tr></thead><tbody id="2025c-top5"></tbody></table>
-        </div>
-        <div class="section">
-          <div class="sh">Zona de Descenso</div>
-          <table class="rtable"><thead><tr><th>#</th><th>Participante</th><th>Saldo</th><th>Últ</th></tr></thead><tbody id="2025c-bot5"></tbody></table>
-        </div>
-      </div>
-    </div>
-    <div class="itab-panel s2025c" data-tab="saldos" style="display:none">
-      <div class="section"><div class="sh">Saldo Acumulado por Participante</div><div id="2025c-bars"></div></div>
-    </div>
-    <div class="itab-panel s2025c" data-tab="fechas" style="display:none">
-      <div class="section"><div class="sh">Resultados por Fecha</div><div class="fgrid" id="2025c-fechas"></div></div>
-    </div>
-    <div class="itab-panel s2025c" data-tab="completa" style="display:none">
-      <div class="section"><div class="sh">Tabla de Resultados Detallada</div><div class="ftable-wrap"><table class="ftable" id="2025c-full"></table></div></div>
     </div>
   </div>
 
-  <!-- ──────── APERTURA 2025 ──────── -->
-  <div id="s2025a" class="season-panel">
-    <div class="itabs">
-      <button class="itab active" onclick="showITab(this,'s2025a','resumen')">Resumen</button>
-      <button class="itab" onclick="showITab(this,'s2025a','saldos')">Saldos</button>
-      <button class="itab" onclick="showITab(this,'s2025a','fechas')">Fechas</button>
-      <button class="itab" onclick="showITab(this,'s2025a','completa')">Tabla Completa</button>
-    </div>
-    <div class="itab-panel s2025a active" data-tab="resumen">
-      <div class="stats-row" id="2025a-stats"></div>
-      <div class="two-col">
-        <div class="section">
-          <div class="sh">Top 5 Ganadores</div>
-          <table class="rtable"><thead><tr><th>#</th><th>Participante</th><th>Saldo</th><th>1°</th></tr></thead><tbody id="2025a-top5"></tbody></table>
+  <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+  <div class="main">
+
+    <!-- ──────── APERTURA 2026 ──────── -->
+    <div id="s2026a" class="season-panel active">
+      <div class="itabs">
+        <button class="itab active" onclick="showITab(this,'s2026a','resumen')">Resumen</button>
+        <button class="itab" onclick="showITab(this,'s2026a','saldos')">Saldos</button>
+        <button class="itab" onclick="showITab(this,'s2026a','fechas')">Fechas</button>
+        <button class="itab" onclick="showITab(this,'s2026a','completa')">Tabla Completa</button>
+      </div>
+      <div class="itab-panel s2026a active" data-tab="resumen">
+        <div class="stats-row" id="2026a-stats"></div>
+        <div class="two-col">
+          <div class="section">
+            <div class="sh">Top 5 Ganadores</div>
+            <table class="rtable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Participante</th>
+                  <th>Saldo</th>
+                  <th>1°</th>
+                </tr>
+              </thead>
+              <tbody id="2026a-top5"></tbody>
+            </table>
+          </div>
+          <div class="section">
+            <div class="sh">Zona de Descenso</div>
+            <table class="rtable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Participante</th>
+                  <th>Saldo</th>
+                  <th>Últ</th>
+                </tr>
+              </thead>
+              <tbody id="2026a-bot5"></tbody>
+            </table>
+          </div>
         </div>
+      </div>
+      <div class="itab-panel s2026a" data-tab="saldos" style="display:none">
         <div class="section">
-          <div class="sh">Zona de Descenso</div>
-          <table class="rtable"><thead><tr><th>#</th><th>Participante</th><th>Saldo</th><th>Últ</th></tr></thead><tbody id="2025a-bot5"></tbody></table>
+          <div class="sh">Saldo Acumulado por Participante</div>
+          <div id="2026a-bars"></div>
+        </div>
+      </div>
+      <div class="itab-panel s2026a" data-tab="fechas" style="display:none">
+        <div class="section">
+          <div class="sh">Resultados por Fecha</div>
+          <div class="fgrid" id="2026a-fechas"></div>
+        </div>
+      </div>
+      <div class="itab-panel s2026a" data-tab="completa" style="display:none">
+        <div class="section">
+          <div class="sh">Tabla de Resultados Detallada</div>
+          <div class="ftable-wrap">
+            <table class="ftable" id="2026a-full"></table>
+          </div>
         </div>
       </div>
     </div>
-    <div class="itab-panel s2025a" data-tab="saldos" style="display:none">
-      <div class="section"><div class="sh">Saldo Acumulado por Participante</div><div id="2025a-bars"></div></div>
-    </div>
-    <div class="itab-panel s2025a" data-tab="fechas" style="display:none">
-      <div class="section"><div class="sh">Resultados por Fecha</div><div class="fgrid" id="2025a-fechas"></div></div>
-    </div>
-    <div class="itab-panel s2025a" data-tab="completa" style="display:none">
-      <div class="section"><div class="sh">Tabla de Resultados Detallada</div><div class="ftable-wrap"><table class="ftable" id="2025a-full"></table></div></div>
-    </div>
-  </div>
 
-  <!-- ──────── LIGA 2024 ──────── -->
-  <div id="s2024" class="season-panel">
-    <div class="itabs">
-      <button class="itab active" onclick="showITab(this,'s2024','resumen')">Resumen</button>
-      <button class="itab" onclick="showITab(this,'s2024','saldos')">Saldos</button>
-      <button class="itab" onclick="showITab(this,'s2024','fechas')">Fechas</button>
-      <button class="itab" onclick="showITab(this,'s2024','completa')">Tabla Completa</button>
-    </div>
-    <div class="itab-panel s2024 active" data-tab="resumen">
-      <div class="stats-row" id="2024-stats"></div>
-      <div class="two-col">
-        <div class="section">
-          <div class="sh">Top 5 Ganadores</div>
-          <table class="rtable"><thead><tr><th>#</th><th>Participante</th><th>Saldo</th><th>1°</th></tr></thead><tbody id="2024-top5"></tbody></table>
+    <!-- ──────── CLAUSURA 2025 ──────── -->
+    <div id="s2025c" class="season-panel">
+      <div class="itabs">
+        <button class="itab active" onclick="showITab(this,'s2025c','resumen')">Resumen</button>
+        <button class="itab" onclick="showITab(this,'s2025c','saldos')">Saldos</button>
+        <button class="itab" onclick="showITab(this,'s2025c','fechas')">Fechas</button>
+        <button class="itab" onclick="showITab(this,'s2025c','completa')">Tabla Completa</button>
+      </div>
+      <div class="itab-panel s2025c active" data-tab="resumen">
+        <div class="stats-row" id="2025c-stats"></div>
+        <div class="two-col">
+          <div class="section">
+            <div class="sh">Top 5 Ganadores</div>
+            <table class="rtable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Participante</th>
+                  <th>Saldo</th>
+                  <th>1°</th>
+                </tr>
+              </thead>
+              <tbody id="2025c-top5"></tbody>
+            </table>
+          </div>
+          <div class="section">
+            <div class="sh">Zona de Descenso</div>
+            <table class="rtable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Participante</th>
+                  <th>Saldo</th>
+                  <th>Últ</th>
+                </tr>
+              </thead>
+              <tbody id="2025c-bot5"></tbody>
+            </table>
+          </div>
         </div>
+      </div>
+      <div class="itab-panel s2025c" data-tab="saldos" style="display:none">
         <div class="section">
-          <div class="sh">Zona de Descenso</div>
-          <table class="rtable"><thead><tr><th>#</th><th>Participante</th><th>Saldo</th><th>Últ</th></tr></thead><tbody id="2024-bot5"></tbody></table>
+          <div class="sh">Saldo Acumulado por Participante</div>
+          <div id="2025c-bars"></div>
+        </div>
+      </div>
+      <div class="itab-panel s2025c" data-tab="fechas" style="display:none">
+        <div class="section">
+          <div class="sh">Resultados por Fecha</div>
+          <div class="fgrid" id="2025c-fechas"></div>
+        </div>
+      </div>
+      <div class="itab-panel s2025c" data-tab="completa" style="display:none">
+        <div class="section">
+          <div class="sh">Tabla de Resultados Detallada</div>
+          <div class="ftable-wrap">
+            <table class="ftable" id="2025c-full"></table>
+          </div>
         </div>
       </div>
     </div>
-    <div class="itab-panel s2024" data-tab="saldos" style="display:none">
-      <div class="section"><div class="sh">Saldo Acumulado por Participante</div><div id="2024-bars"></div></div>
-    </div>
-    <div class="itab-panel s2024" data-tab="fechas" style="display:none">
-      <div class="section"><div class="sh">Resultados por Fecha</div><div class="fgrid" id="2024-fechas"></div></div>
-    </div>
-    <div class="itab-panel s2024" data-tab="completa" style="display:none">
-      <div class="section"><div class="sh">Tabla de Resultados Detallada</div><div class="ftable-wrap"><table class="ftable" id="2024-full"></table></div></div>
-    </div>
-  </div>
 
-</div><!-- /main -->
+    <!-- ──────── APERTURA 2025 ──────── -->
+    <div id="s2025a" class="season-panel">
+      <div class="itabs">
+        <button class="itab active" onclick="showITab(this,'s2025a','resumen')">Resumen</button>
+        <button class="itab" onclick="showITab(this,'s2025a','saldos')">Saldos</button>
+        <button class="itab" onclick="showITab(this,'s2025a','fechas')">Fechas</button>
+        <button class="itab" onclick="showITab(this,'s2025a','completa')">Tabla Completa</button>
+      </div>
+      <div class="itab-panel s2025a active" data-tab="resumen">
+        <div class="stats-row" id="2025a-stats"></div>
+        <div class="two-col">
+          <div class="section">
+            <div class="sh">Top 5 Ganadores</div>
+            <table class="rtable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Participante</th>
+                  <th>Saldo</th>
+                  <th>1°</th>
+                </tr>
+              </thead>
+              <tbody id="2025a-top5"></tbody>
+            </table>
+          </div>
+          <div class="section">
+            <div class="sh">Zona de Descenso</div>
+            <table class="rtable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Participante</th>
+                  <th>Saldo</th>
+                  <th>Últ</th>
+                </tr>
+              </thead>
+              <tbody id="2025a-bot5"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="itab-panel s2025a" data-tab="saldos" style="display:none">
+        <div class="section">
+          <div class="sh">Saldo Acumulado por Participante</div>
+          <div id="2025a-bars"></div>
+        </div>
+      </div>
+      <div class="itab-panel s2025a" data-tab="fechas" style="display:none">
+        <div class="section">
+          <div class="sh">Resultados por Fecha</div>
+          <div class="fgrid" id="2025a-fechas"></div>
+        </div>
+      </div>
+      <div class="itab-panel s2025a" data-tab="completa" style="display:none">
+        <div class="section">
+          <div class="sh">Tabla de Resultados Detallada</div>
+          <div class="ftable-wrap">
+            <table class="ftable" id="2025a-full"></table>
+          </div>
+        </div>
+      </div>
+    </div>
 
-<!-- JS — load order matters -->
-<script src="js/config.js"></script>
-<script src="js/data-history.js"></script>
-<script src="js/render.js"></script>
-<script src="js/nav.js"></script>
-<script src="js/admin.js"></script>
-<script src="js/app.js"></script>
+    <!-- ──────── LIGA 2024 ──────── -->
+    <div id="s2024" class="season-panel">
+      <div class="itabs">
+        <button class="itab active" onclick="showITab(this,'s2024','resumen')">Resumen</button>
+        <button class="itab" onclick="showITab(this,'s2024','saldos')">Saldos</button>
+        <button class="itab" onclick="showITab(this,'s2024','fechas')">Fechas</button>
+        <button class="itab" onclick="showITab(this,'s2024','completa')">Tabla Completa</button>
+      </div>
+      <div class="itab-panel s2024 active" data-tab="resumen">
+        <div class="stats-row" id="2024-stats"></div>
+        <div class="two-col">
+          <div class="section">
+            <div class="sh">Top 5 Ganadores</div>
+            <table class="rtable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Participante</th>
+                  <th>Saldo</th>
+                  <th>1°</th>
+                </tr>
+              </thead>
+              <tbody id="2024-top5"></tbody>
+            </table>
+          </div>
+          <div class="section">
+            <div class="sh">Zona de Descenso</div>
+            <table class="rtable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Participante</th>
+                  <th>Saldo</th>
+                  <th>Últ</th>
+                </tr>
+              </thead>
+              <tbody id="2024-bot5"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="itab-panel s2024" data-tab="saldos" style="display:none">
+        <div class="section">
+          <div class="sh">Saldo Acumulado por Participante</div>
+          <div id="2024-bars"></div>
+        </div>
+      </div>
+      <div class="itab-panel s2024" data-tab="fechas" style="display:none">
+        <div class="section">
+          <div class="sh">Resultados por Fecha</div>
+          <div class="fgrid" id="2024-fechas"></div>
+        </div>
+      </div>
+      <div class="itab-panel s2024" data-tab="completa" style="display:none">
+        <div class="section">
+          <div class="sh">Tabla de Resultados Detallada</div>
+          <div class="ftable-wrap">
+            <table class="ftable" id="2024-full"></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+
+  <!-- JS — load order matters -->
+  <script src="js/config.js"></script>
+  <script src="js/data-history.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/app.js"></script>
 
 </body>
+
 </html>

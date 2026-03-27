@@ -10,16 +10,16 @@ function fmtM(v) {
 //  BUILD SEASON — renders all tabs for a season
 // ═══════════════════════════════════════════════
 function buildSeason(sid, data, prefix) {
-  const p      = data.participants;
+  const p = data.participants;
   const sorted = [...p].sort((a, b) => b.saldo - a.saldo);
   const maxAbs = Math.max(...p.map(x => Math.abs(x.saldo)));
 
   // ── STATS CARDS ──
-  const leader     = sorted[0];
-  const loser      = sorted[sorted.length - 1];
-  const maxWins    = Math.max(...p.map(x => x.primero));
+  const leader = sorted[0];
+  const loser = sorted[sorted.length - 1];
+  const maxWins = Math.max(...p.map(x => x.primero));
   const topWinners = p.filter(x => x.primero === maxWins);
-  const positives  = p.filter(x => x.saldo > 0).length;
+  const positives = p.filter(x => x.saldo > 0).length;
 
   const statsEl = document.getElementById(prefix + '-stats');
   if (statsEl) {
@@ -58,7 +58,7 @@ function buildSeason(sid, data, prefix) {
   if (top5El) {
     top5El.innerHTML = top5.map((x, i) => `
       <tr style="animation:fadeIn 0.3s ease both;animation-delay:${0.05 + i * 0.07}s">
-        <td><span class="rnum ${['r1','r2','r3','rx','rx'][i]}">${i + 1}</span></td>
+        <td><span class="rnum ${['r1', 'r2', 'r3', 'rx', 'rx'][i]}">${i + 1}</span></td>
         <td>${x.name}</td>
         <td><span class="chip chip-g">${fmtM(x.saldo)}</span></td>
         <td><span class="chip chip-y">${x.primero}×</span></td>
@@ -139,9 +139,9 @@ function buildSeason(sid, data, prefix) {
       const total = r.f.reduce((a, b) => a + b, 0);
       const tclass = total > 0 ? 'total-pos' : total < 0 ? 'total-neg' : 'total-neu';
       const cells = r.f.map(v => {
-        if (v > 0)       return `<td><span class="cv win">+${v}K</span></td>`;
+        if (v > 0) return `<td><span class="cv win">+${v}K</span></td>`;
         if (v < baseFee) return `<td><span class="cv big-loss">${v}K</span></td>`;
-        if (v === 0)     return `<td><span class="cv zero">—</span></td>`;
+        if (v === 0) return `<td><span class="cv zero">—</span></td>`;
         return `<td><span class="cv loss">${v}K</span></td>`;
       }).join('');
       return `<tr><td>${r.name}</td>${cells}<td><span class="cv ${tclass}">${total > 0 ? '+' : ''}${total}K</span></td></tr>`;
@@ -170,16 +170,16 @@ function buildGlobalStats() {
     season.participants.forEach(p => {
       const name = mergeAlias(p.name);
       if (!map[name]) map[name] = { name, saldo: 0, primero: 0, ultimo: 0, seasons: 0 };
-      map[name].saldo   += p.saldo;
+      map[name].saldo += p.saldo;
       map[name].primero += p.primero;
-      map[name].ultimo  += p.ultimo;
+      map[name].ultimo += p.ultimo;
       map[name].seasons += 1;
     });
   });
 
-  const players  = Object.values(map).sort((a, b) => b.saldo - a.saldo);
-  const maxAbs   = Math.max(...players.map(x => Math.abs(x.saldo)));
-  const maxWins  = Math.max(...players.map(x => x.primero));
+  const players = Object.values(map).sort((a, b) => b.saldo - a.saldo);
+  const maxAbs = Math.max(...players.map(x => Math.abs(x.saldo)));
+  const maxWins = Math.max(...players.map(x => x.primero));
   const topWinners = players.filter(x => x.primero === maxWins);
   const topLoser = [...players].sort((a, b) => b.ultimo - a.ultimo)[0];
 

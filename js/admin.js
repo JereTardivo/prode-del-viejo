@@ -2,7 +2,7 @@
 //  ADMIN SYSTEM — Firebase Auth + Realtime DB
 // ═══════════════════════════════════════════════
 let adminSeason = 's2026a';
-let cachedFB    = {};
+let cachedFB = {};
 
 // ── Firebase listener: cache all saved fechas ──
 db.ref(FB_PATH).on('value', snap => {
@@ -13,7 +13,7 @@ db.ref(FB_PATH).on('value', snap => {
 function applyFecha(sid, numStr, fd) {
   const data = seasonDataMap[sid];
   if (!data) return;
-  const numKey   = isNaN(numStr) ? numStr : Number(numStr);
+  const numKey = isNaN(numStr) ? numStr : Number(numStr);
   const existing = data.fechas.find(f => String(f.num) === String(numKey));
   if (existing) {
     existing.g = fd.g || [];
@@ -50,7 +50,7 @@ function refreshSavedList() {
   const el = document.getElementById('admin-saved-list');
   if (!el) return;
   const fechas = getSavedForSeason(adminSeason);
-  const keys   = Object.keys(fechas);
+  const keys = Object.keys(fechas);
   if (!keys.length) {
     el.innerHTML = '<span style="color:var(--muted);font-size:12px">No hay fechas guardadas para esta temporada</span>';
     return;
@@ -67,9 +67,9 @@ function refreshSavedList() {
 function editFecha(safeKey) {
   const fd = getSavedForSeason(adminSeason)[safeKey];
   if (!fd) return;
-  document.getElementById('af-num').value        = fd.numRaw || safeKey.replace(/_/g, ' ');
-  document.getElementById('af-monto').value      = fd.monto || '';
-  document.getElementById('af-ganadores').value  = (fd.g || []).join('\n');
+  document.getElementById('af-num').value = fd.numRaw || safeKey.replace(/_/g, ' ');
+  document.getElementById('af-monto').value = fd.monto || '';
+  document.getElementById('af-ganadores').value = (fd.g || []).join('\n');
   document.getElementById('af-perdedores').value = (fd.p || []).join('\n');
 }
 
@@ -77,12 +77,12 @@ function editFecha(safeKey) {
 async function saveFecha() {
   if (!auth.currentUser) { alert('Sesión expirada. Volvé a ingresar.'); hideAdminPanel(); return; }
   const numRaw = document.getElementById('af-num').value.trim();
-  const monto  = parseInt(document.getElementById('af-monto').value) || 0;
-  const gRaw   = document.getElementById('af-ganadores').value;
-  const pRaw   = document.getElementById('af-perdedores').value;
+  const monto = parseInt(document.getElementById('af-monto').value) || 0;
+  const gRaw = document.getElementById('af-ganadores').value;
+  const pRaw = document.getElementById('af-perdedores').value;
   if (!numRaw) { alert('Ingresá el número o nombre de la fecha'); return; }
-  const g       = gRaw.split('\n').map(s => s.trim()).filter(Boolean);
-  const p       = pRaw.split('\n').map(s => s.trim()).filter(Boolean);
+  const g = gRaw.split('\n').map(s => s.trim()).filter(Boolean);
+  const p = pRaw.split('\n').map(s => s.trim()).filter(Boolean);
   const safeKey = numRaw.replace(/[.#$\[\]\/]/g, '_');
   setAdminLoading(true);
   try {
@@ -103,9 +103,9 @@ async function deleteFecha(numStr) {
   const safeKey = numStr.replace(/[.#$\[\]\/]/g, '_');
   try {
     await db.ref(`${FB_PATH}/${adminSeason}/${safeKey}`).remove();
-    const data   = seasonDataMap[adminSeason];
+    const data = seasonDataMap[adminSeason];
     const numKey = isNaN(numStr) ? numStr : Number(numStr);
-    const idx    = data.fechas.findIndex(f => String(f.num) === String(numKey));
+    const idx = data.fechas.findIndex(f => String(f.num) === String(numKey));
     if (idx > -1) { data.fechas[idx].g = []; data.fechas[idx].p = []; }
   } catch (e) {
     alert('Error eliminando: ' + e.message);
@@ -152,30 +152,30 @@ function hideAdminLogin(e) {
 function _closeAdminLogin() {
   document.getElementById('admin-login-modal').classList.remove('open');
   document.getElementById('admin-login-err').style.display = 'none';
-  document.getElementById('admin-email').value    = '';
-  document.getElementById('admin-pass').value     = '';
+  document.getElementById('admin-email').value = '';
+  document.getElementById('admin-pass').value = '';
   document.body.style.overflow = '';
 }
 
 async function doLogin() {
   const email = document.getElementById('admin-email').value.trim();
-  const pass  = document.getElementById('admin-pass').value;
+  const pass = document.getElementById('admin-pass').value;
   const errEl = document.getElementById('admin-login-err');
-  const btn   = document.getElementById('admin-login-btn');
+  const btn = document.getElementById('admin-login-btn');
   errEl.style.display = 'none';
-  btn.textContent     = 'Ingresando...';
-  btn.disabled        = true;
+  btn.textContent = 'Ingresando...';
+  btn.disabled = true;
   try {
     await auth.signInWithEmailAndPassword(email, pass);
     _closeAdminLogin();
     openAdminPanel();
   } catch (e) {
-    errEl.textContent   = 'Email o contraseña incorrectos';
+    errEl.textContent = 'Email o contraseña incorrectos';
     errEl.style.display = 'block';
     document.getElementById('admin-pass').value = '';
   }
   btn.textContent = 'Ingresar';
-  btn.disabled    = false;
+  btn.disabled = false;
 }
 
 async function doLogout() {
