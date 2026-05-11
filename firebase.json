@@ -1,0 +1,6 @@
+{
+  "database": {
+    "project": "prode-del-viejo",
+    "rules": "firebase-rules.json"
+  }
+}
