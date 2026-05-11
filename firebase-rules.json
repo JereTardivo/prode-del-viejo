@@ -4,6 +4,9 @@
     ".write": false,
     "prode_fechas": {
       ".write": "auth != null"
+    },
+    "prode_meta": {
+      ".write": "auth != null"
     }
   }
 }

@@ -145,6 +145,49 @@
     }
     .spin { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── TOAST ── */
+    #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast {
+      background: var(--s2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px 18px; font-size: 13px; font-weight: 600; font-family: 'Syne', sans-serif;
+      max-width: 320px; box-shadow: 0 8px 24px rgba(0,0,0,.4);
+      opacity: 0; transform: translateY(12px) scale(.96);
+      transition: opacity .25s, transform .25s;
+      pointer-events: auto;
+    }
+    .toast.show { opacity: 1; transform: translateY(0) scale(1); }
+    .toast.t-success { border-color: rgba(74,222,128,.35); color: var(--green); }
+    .toast.t-error   { border-color: rgba(248,113,113,.35); color: var(--red); }
+    .toast.t-info    { border-color: rgba(56,189,248,.35);  color: var(--cyan); }
+
+    /* ── CONFIRM MODAL ── */
+    #confirm-overlay {
+      display: none; position: fixed; inset: 0; z-index: 900;
+      background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center;
+    }
+    #confirm-box {
+      background: var(--s1); border: 1px solid var(--border); border-radius: 16px;
+      padding: 28px 28px 22px; max-width: 380px; width: calc(100% - 48px);
+      box-shadow: 0 20px 60px rgba(0,0,0,.6);
+      animation: popIn .2s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    @keyframes popIn { from { opacity:0; transform:scale(.88); } to { opacity:1; transform:scale(1); } }
+    #confirm-msg { font-size: 14px; color: var(--text); line-height: 1.6; margin-bottom: 20px; }
+    #confirm-msg strong { font-size: 15px; display: block; margin-bottom: 6px; }
+    #confirm-msg small { color: var(--text2); font-size: 12px; }
+    .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    #confirm-cancel {
+      padding: 9px 18px; border-radius: 9px; font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+      cursor: pointer; background: rgba(255,255,255,.05); border: 1px solid var(--border); color: var(--text2);
+    }
+    #confirm-cancel:hover { background: rgba(255,255,255,.09); }
+    #confirm-ok {
+      padding: 9px 20px; border-radius: 9px; font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+      cursor: pointer; border: 1px solid; transition: opacity .15s;
+    }
+    #confirm-ok:hover { opacity: .8; }
   </style>
 </head>
 <body>
@@ -244,6 +287,20 @@
   </div><!-- /adm-body -->
 </div><!-- /app -->
 
+<!-- Confirm modal -->
+<div id="confirm-overlay" onclick="if(event.target===this)_confirmReject()">
+  <div id="confirm-box">
+    <div id="confirm-msg"></div>
+    <div class="confirm-actions">
+      <button id="confirm-cancel" onclick="_confirmReject()">Cancelar</button>
+      <button id="confirm-ok"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -251,6 +308,39 @@
 <script src="js/config.js"></script>
 <script src="js/data-history.js"></script>
 <script>
+// ═══════════════════════════════
+//  TOAST & CONFIRM
+// ═══════════════════════════════
+function showToast(msg, type = 'info') {
+  const tc = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast t-${type}`;
+  t.textContent = msg;
+  tc.appendChild(t);
+  requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
+  setTimeout(() => {
+    t.classList.remove('show');
+    setTimeout(() => t.remove(), 300);
+  }, 3200);
+}
+
+let _confirmResolve = null;
+function showConfirm(htmlMsg, okLabel = 'Confirmar', okStyle = '') {
+  return new Promise(resolve => {
+    _confirmResolve = resolve;
+    document.getElementById('confirm-msg').innerHTML = htmlMsg;
+    const okBtn = document.getElementById('confirm-ok');
+    okBtn.textContent = okLabel;
+    okBtn.style.cssText = okStyle;
+    okBtn.onclick = () => { document.getElementById('confirm-overlay').style.display = 'none'; if (_confirmResolve) { _confirmResolve(true); _confirmResolve = null; } };
+    document.getElementById('confirm-overlay').style.display = 'flex';
+  });
+}
+function _confirmReject() {
+  document.getElementById('confirm-overlay').style.display = 'none';
+  if (_confirmResolve) { _confirmResolve(false); _confirmResolve = null; }
+}
+
 // ═══════════════════════════════
 //  STATE
 // ═══════════════════════════════
@@ -346,14 +436,20 @@ function updateSeasonStatus() {
 async function toggleSeasonClosed() {
   const closing = !isSeasonClosed();
   const label   = document.querySelector('.snav-btn.active')?.textContent?.replace('🔒','').trim() || currentSid;
-  const msg     = closing
-    ? `¿Finalizar "${label}"?\n\nNo se podrán agregar ni editar fechas hasta reabrirla.`
-    : `¿Reabrir "${label}" para edición?`;
-  if (!confirm(msg)) return;
+  const htmlMsg = closing
+    ? `<strong>🔒 Finalizar "${label}"</strong><small>No se podrán agregar ni editar fechas hasta reabrirla.</small>`
+    : `<strong>🔓 Reabrir "${label}"</strong><small>Se habilitará la edición de fechas nuevamente.</small>`;
+  const okLabel = closing ? '🔒 Finalizar temporada' : '🔓 Reabrir temporada';
+  const okStyle = closing
+    ? 'background:rgba(240,192,64,.12);border:1px solid rgba(240,192,64,.4);color:#f0c040;padding:9px 20px;border-radius:9px;font-family:Syne,sans-serif;font-size:12px;font-weight:700;cursor:pointer;'
+    : 'background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.4);color:#4ade80;padding:9px 20px;border-radius:9px;font-family:Syne,sans-serif;font-size:12px;font-weight:700;cursor:pointer;';
+  const ok = await showConfirm(htmlMsg, okLabel, okStyle);
+  if (!ok) return;
   try {
     await db.ref(`${FB_META}/${currentSid}/closed`).set(closing);
+    showToast(closing ? `"${label}" finalizada 🔒` : `"${label}" reabierta 🔓`, closing ? 'info' : 'success');
   } catch (e) {
-    alert('Error: ' + e.message);
+    showToast('Error: ' + e.message, 'error');
   }
 }
 
@@ -520,8 +616,8 @@ async function saveEdit() {
   const s = document.getElementById('ef-s').value.split('\n').map(x => x.trim()).filter(Boolean);
   const z = document.getElementById('ef-z').value.trim();
 
-  if (!numRaw) { alert('Ingresá el número o nombre de la fecha'); return; }
-  if (!g.length && !p.length) { alert('Ingresá al menos un ganador o perdedor'); return; }
+  if (!numRaw) { showToast('Ingresá el número o nombre de la fecha', 'error'); return; }
+  if (!g.length && !p.length) { showToast('Ingresá al menos un ganador o perdedor', 'error'); return; }
 
   const safeKey = numRaw.replace(/[.#$\[\]\/]/g, '_');
   const fd = { g, p, s, z, monto, numRaw };
@@ -537,7 +633,7 @@ async function saveEdit() {
     setSource('✓ Guardado correctamente en Firebase', true);
     // fbData updated by listener → renderFechas() auto-called
   } catch (e) {
-    alert('Error guardando: ' + e.message);
+    showToast('Error guardando: ' + e.message, 'error');
     setSource('✗ Error al guardar: ' + e.message, false);
   }
 
@@ -552,7 +648,12 @@ async function deleteEdit() {
   const numRaw = document.getElementById('ef-num').value.trim();
   if (!numRaw) return;
   const label = typeof numRaw === 'string' && !isNaN(numRaw) ? `Fecha ${numRaw}` : numRaw;
-  if (!confirm(`¿Eliminar datos Firebase de ${label}? Los datos estáticos originales quedan intactos.`)) return;
+  const okDel = await showConfirm(
+    `<strong>🗑 Eliminar ${label}</strong><small>Se eliminarán los datos Firebase. Los datos estáticos originales quedan intactos.</small>`,
+    'Eliminar',
+    'background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.4);color:#f87171;padding:9px 20px;border-radius:9px;font-family:Syne,sans-serif;font-size:12px;font-weight:700;cursor:pointer;'
+  );
+  if (!okDel) return;
 
   const safeKey = numRaw.replace(/[.#$\[\]\/]/g, '_');
   try {
@@ -560,7 +661,7 @@ async function deleteEdit() {
     editingKey = null;
     clearEditForm();
   } catch (e) {
-    alert('Error: ' + e.message);
+    showToast('Error: ' + e.message, 'error');
   }
 }
 
@@ -569,13 +670,19 @@ async function deleteEdit() {
 // ═══════════════════════════════
 async function clearSeasonAll() {
   const label = document.querySelector('.snav-btn.active')?.textContent?.trim() || currentSid;
-  if (!confirm(`¿Eliminar TODOS los datos Firebase de ${label}?\n\nLos datos estáticos quedan intactos. Efecto visible al recargar el prode principal.`)) return;
+  const okClear = await showConfirm(
+    `<strong>🗑 Limpiar TODA la temporada</strong><small>Se eliminarán TODOS los datos Firebase de <strong>${label}</strong>. Los datos estáticos quedan intactos.</small>`,
+    'Limpiar todo',
+    'background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.4);color:#f87171;padding:9px 20px;border-radius:9px;font-family:Syne,sans-serif;font-size:12px;font-weight:700;cursor:pointer;'
+  );
+  if (!okClear) return;
   try {
     await db.ref(`${FB_PATH}/${currentSid}`).remove();
     clearEditForm();
     setSource('✓ Todos los datos Firebase eliminados para esta temporada', true);
+    showToast('Temporada limpiada correctamente', 'success');
   } catch (e) {
-    alert('Error: ' + e.message);
+    showToast('Error: ' + e.message, 'error');
   }
 }
 
