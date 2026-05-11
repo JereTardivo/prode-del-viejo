@@ -13,8 +13,10 @@ function applyFecha(sid, numStr, fd) {
   if (existing) {
     existing.g = fd.g || [];
     existing.p = fd.p || [];
+    existing.s = fd.s || [];
+    existing.z = fd.z || '';
   } else {
-    data.fechas.push({ num: numKey, g: fd.g || [], p: fd.p || [] });
+    data.fechas.push({ num: numKey, g: fd.g || [], p: fd.p || [], s: fd.s || [], z: fd.z || '' });
     data.fechas.sort((a, b) => {
       const an = isNaN(a.num) ? 999 : Number(a.num);
       const bn = isNaN(b.num) ? 999 : Number(b.num);
@@ -79,8 +81,12 @@ async function saveFecha() {
   if (!gRaw.trim() && !pRaw.trim()) { alert('Ingresá al menos un ganador o perdedor'); return; }
   const g = gRaw.split('\n').map(s => s.trim()).filter(Boolean);
   const p = pRaw.split('\n').map(s => s.trim()).filter(Boolean);
+  const sRaw = (document.getElementById('af-segundos')?.value || '');
+  const zRaw = (document.getElementById('af-ultimo')?.value || '').trim();
+  const s = sRaw.split('\n').map(x => x.trim()).filter(Boolean);
+  const z = zRaw;
   const safeKey = numRaw.replace(/[.#$\[\]\/]/g, '_');
-  const fd = { g, p, monto, numRaw };
+  const fd = { g, p, s, z, monto, numRaw };
   setAdminLoading(true);
   try {
     await db.ref(`${FB_PATH}/${adminSeason}/${safeKey}`).set(fd);

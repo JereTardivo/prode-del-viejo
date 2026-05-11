@@ -111,6 +111,18 @@ function buildSeason(sid, data, prefix) {
           html += `<div class="wrow"><div class="wdot g"></div><div class="wname">${w}</div><div class="wamt p">+${fmtM(prize)}</div></div>`;
         });
       }
+      if (f.s && f.s.length) {
+        html += `<div style="height:1px;background:var(--border);margin:8px 0"></div>`;
+        html += `<div class="fgroup-label s">2dos</div>`;
+        f.s.forEach(n => {
+          html += `<div class="wrow"><div class="wdot s"></div><div class="wname">${n}</div><div class="wamt s">$0</div></div>`;
+        });
+      }
+      if (f.z) {
+        html += `<div style="height:1px;background:var(--border);margin:8px 0"></div>`;
+        html += `<div class="fgroup-label z">Último · 0 pts</div>`;
+        html += `<div class="wrow"><div class="wdot z"></div><div class="wname">${f.z}</div><div class="wamt z">+${fmtM(50000)}</div></div>`;
+      }
       if (f.p.length) {
         html += `<div style="height:1px;background:var(--border);margin:8px 0"></div>`;
         html += `<div class="fgroup-label r">Perdedores</div>`;

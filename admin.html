@@ -217,6 +217,18 @@
         </div>
       </div>
 
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="color:var(--muted)">2dos — pierden $0 (uno por línea)</label>
+          <textarea id="ef-s" class="adm-textarea" placeholder="Jorge Alvarez&#10;Rodrigo Becerra" style="min-height:72px"></textarea>
+        </div>
+        <div>
+          <label style="color:var(--cyan)">&#218;ltimo con 0 puntos</label>
+          <input id="ef-z" class="adm-input" type="text" placeholder="Nombre del participante">
+          <div class="input-hint" style="color:var(--cyan);margin-top:4px">→ Recibe +$50.000 fijo</div>
+        </div>
+      </div>
+
       <div id="ef-preview" class="ef-preview"></div>
 
       <div class="ef-actions">
@@ -323,7 +335,7 @@ function updateSeasonStatus() {
   document.getElementById('fechas-closed-banner').style.display = closed ? 'block' : 'none';
 
   // Form controls
-  ['ef-num','ef-monto','ef-g','ef-p'].forEach(id => {
+  ['ef-num','ef-monto','ef-g','ef-p','ef-s','ef-z'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.disabled = closed;
   });
@@ -433,6 +445,8 @@ function editFecha(safeKey) {
   document.getElementById('ef-monto').value = f.monto || '';
   document.getElementById('ef-g').value = f.g.join('\n');
   document.getElementById('ef-p').value = f.p.join('\n');
+  document.getElementById('ef-s').value = (f.s || []).join('\n');
+  document.getElementById('ef-z').value = f.z || '';
 
   setSource(f.fromFirebase ? `✓ Datos en Firebase` : `→ Datos estáticos (guardar para crear override)`, f.fromFirebase);
   document.getElementById('btn-del').style.display = (!isSeasonClosed() && f.fromFirebase) ? 'inline-block' : 'none';
@@ -446,6 +460,8 @@ function newFecha() {
   document.getElementById('ef-monto').value = '';
   document.getElementById('ef-g').value = '';
   document.getElementById('ef-p').value = '';
+  document.getElementById('ef-s').value = '';
+  document.getElementById('ef-z').value = '';
   document.getElementById('btn-del').style.display = 'none';
   setSource('→ Nueva fecha (se guardará solo en Firebase)', false);
   updatePreview();
@@ -455,10 +471,10 @@ function newFecha() {
 
 function clearEditForm() {
   editingKey = null;
-  document.getElementById('ef-num').value = '';
-  document.getElementById('ef-monto').value = '';
-  document.getElementById('ef-g').value = '';
-  document.getElementById('ef-p').value = '';
+  ['ef-num','ef-monto','ef-g','ef-p','ef-s','ef-z'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
   document.getElementById('ef-preview').style.display = 'none';
   document.getElementById('btn-del').style.display = 'none';
   setSource('← Seleccioná una fecha para editar', false);
@@ -476,13 +492,21 @@ function setSource(text, ok) {
 function updatePreview() {
   const monto = parseInt(document.getElementById('ef-monto').value) || 0;
   const g = document.getElementById('ef-g').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const z = document.getElementById('ef-z').value.trim();
   const el = document.getElementById('ef-preview');
-  if (!monto || !g.length) { el.style.display = 'none'; return; }
-  const per = Math.round(monto / g.length);
+  if (!monto && !z) { el.style.display = 'none'; return; }
   el.style.display = 'block';
-  el.textContent = g.length === 1
-    ? `→ Ganador recibe $\u00a0${per.toLocaleString('es-AR')},00`
-    : `→ ${g.length} ganadores · $\u00a0${per.toLocaleString('es-AR')},00 c/u  (total $\u00a0${monto.toLocaleString('es-AR')},00)`;
+  let txt = '';
+  if (monto && g.length) {
+    const per = Math.round(monto / g.length);
+    txt = g.length === 1
+      ? `→ Ganador recibe $\u00a0${per.toLocaleString('es-AR')},00`
+      : `→ ${g.length} ganadores · $\u00a0${per.toLocaleString('es-AR')},00 c/u (total $\u00a0${monto.toLocaleString('es-AR')},00)`;
+  } else if (monto) {
+    txt = `→ Premio $\u00a0${monto.toLocaleString('es-AR')},00`;
+  }
+  if (z) txt += (txt ? '  ·  ' : '') + `🟦 ${z} recibe +$\u00a050.000,00 (0 pts)`;
+  el.textContent = txt || '…';
 }
 
 // ═══════════════════════════════
@@ -493,12 +517,14 @@ async function saveEdit() {
   const monto  = parseInt(document.getElementById('ef-monto').value) || 0;
   const g = document.getElementById('ef-g').value.split('\n').map(s => s.trim()).filter(Boolean);
   const p = document.getElementById('ef-p').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const s = document.getElementById('ef-s').value.split('\n').map(x => x.trim()).filter(Boolean);
+  const z = document.getElementById('ef-z').value.trim();
 
   if (!numRaw) { alert('Ingresá el número o nombre de la fecha'); return; }
   if (!g.length && !p.length) { alert('Ingresá al menos un ganador o perdedor'); return; }
 
   const safeKey = numRaw.replace(/[.#$\[\]\/]/g, '_');
-  const fd = { g, p, monto, numRaw };
+  const fd = { g, p, s, z, monto, numRaw };
 
   const btn = document.getElementById('btn-save');
   btn.textContent = '⏳ Guardando...';
