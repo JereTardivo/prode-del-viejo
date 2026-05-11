@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — El PRODE del Viejo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="prodeviejo.png">
+  <style>
+    :root {
+      --bg: #06080f; --s1: #0d1117; --s2: #131b27; --s3: #1a2438;
+      --border: rgba(255,255,255,0.07); --gold: #f0c040; --cyan: #38bdf8;
+      --red: #f87171; --green: #4ade80; --muted: #7a8fa8; --text: #e2e8f0; --text2: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100vh; }
+
+    /* ── HEADER ── */
+    .adm-header {
+      background: var(--s1); border-bottom: 1px solid var(--border);
+      padding: 14px 24px; display: flex; align-items: center; gap: 16px;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .adm-title { font-size: 18px; font-weight: 800; color: var(--gold); letter-spacing: 1px; flex: 1; }
+    .adm-user { font-size: 12px; color: var(--muted); }
+    .btn-hdr {
+      padding: 7px 14px; border-radius: 8px; font-family: 'Syne', sans-serif;
+      font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid; letter-spacing: .5px;
+    }
+    .btn-back { background: rgba(56,189,248,.08); border-color: rgba(56,189,248,.3); color: var(--cyan); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-logout { background: rgba(248,113,113,.08); border-color: rgba(248,113,113,.3); color: var(--red); }
+
+    /* ── SEASON NAV ── */
+    .snav { display: flex; gap: 4px; padding: 16px 24px 0; border-bottom: 1px solid var(--border); overflow-x: auto; }
+    .snav-btn {
+      padding: 10px 20px; font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase; color: var(--muted); cursor: pointer;
+      border: none; background: none; border-bottom: 2px solid transparent; transition: all .2s; white-space: nowrap;
+    }
+    .snav-btn:hover { color: var(--text2); }
+    .snav-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+    /* ── MAIN LAYOUT ── */
+    .adm-body { display: grid; grid-template-columns: 1fr 380px; gap: 0; height: calc(100vh - 113px); }
+    @media(max-width:768px) {
+      .adm-body { grid-template-columns: 1fr; height: auto; }
+      .edit-panel { position: sticky; bottom: 0; max-height: 60vh; overflow-y: auto; }
+    }
+
+    /* ── FECHAS LIST ── */
+    .fechas-panel { overflow-y: auto; padding: 20px 24px; }
+    .fechas-panel h2 { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+
+    .frow {
+      background: var(--s1); border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px 16px; margin-bottom: 8px; cursor: pointer;
+      display: grid; grid-template-columns: 90px 1fr auto;
+      align-items: center; gap: 12px; transition: border-color .15s, background .15s;
+    }
+    .frow:hover { border-color: rgba(240,192,64,.3); background: var(--s2); }
+    .frow.active-edit { border-color: var(--cyan); background: rgba(56,189,248,.06); }
+    .frow.no-data { opacity: .55; }
+    .frow-label { font-size: 13px; font-weight: 700; color: var(--gold); }
+    .frow-info { font-size: 12px; color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .frow-g { color: var(--green); }
+    .frow-p { color: var(--red); }
+    .frow-sep { color: var(--muted); margin: 0 4px; }
+    .frow-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+    .frow-monto { font-size: 11px; color: var(--text2); }
+    .badge { font-size: 9px; font-weight: 700; letter-spacing: .5px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+    .badge.fb { background: rgba(56,189,248,.15); color: var(--cyan); border: 1px solid rgba(56,189,248,.3); }
+    .badge.static { background: rgba(122,143,168,.1); color: var(--muted); border: 1px solid rgba(122,143,168,.2); }
+
+    .frow-new {
+      border: 1px dashed rgba(74,222,128,.25); background: rgba(74,222,128,.04);
+      color: var(--green); font-size: 13px; font-weight: 700; text-align: center;
+      padding: 12px; border-radius: 10px; cursor: pointer; transition: all .15s;
+      display: block; grid-template-columns: unset;
+    }
+    .frow-new:hover { background: rgba(74,222,128,.1); border-color: rgba(74,222,128,.5); }
+
+    /* ── EDIT PANEL ── */
+    .edit-panel {
+      background: var(--s1); border-left: 1px solid var(--border);
+      padding: 20px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;
+    }
+    .edit-panel h2 { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+
+    .ef-source {
+      font-size: 12px; padding: 8px 12px; border-radius: 8px;
+      background: rgba(122,143,168,.08); border: 1px solid var(--border); color: var(--text2);
+    }
+    .ef-source.ok { background: rgba(74,222,128,.08); border-color: rgba(74,222,128,.25); color: var(--green); }
+
+    label { display: block; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+    .adm-input, .adm-textarea {
+      width: 100%; background: var(--s3); border: 1px solid var(--border); border-radius: 8px;
+      padding: 9px 12px; color: var(--text); font-family: 'Syne', sans-serif; font-size: 13px;
+      outline: none; transition: border-color .15s;
+    }
+    .adm-input:focus, .adm-textarea:focus { border-color: rgba(56,189,248,.5); }
+    .adm-textarea { min-height: 90px; resize: vertical; }
+    .input-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    .ef-preview {
+      display: none; font-size: 12px; color: var(--cyan); padding: 8px 12px;
+      background: rgba(56,189,248,.07); border: 1px solid rgba(56,189,248,.2); border-radius: 7px;
+    }
+
+    .ef-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-save {
+      flex: 1; padding: 11px; border-radius: 10px; font-family: 'Syne', sans-serif;
+      font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+      background: linear-gradient(135deg, rgba(74,222,128,.15), rgba(74,222,128,.05));
+      border: 1px solid rgba(74,222,128,.4); color: var(--green);
+    }
+    .btn-save:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-del {
+      padding: 11px 14px; border-radius: 10px; font-family: 'Syne', sans-serif;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.3); color: var(--red);
+      display: none;
+    }
+    .btn-clear-all {
+      width: 100%; padding: 9px; border-radius: 8px; font-family: 'Syne', sans-serif;
+      font-size: 11px; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: .5px;
+      background: rgba(248,113,113,.06); border: 1px solid rgba(248,113,113,.2); color: var(--red);
+    }
+
+    #empty-state {
+      padding: 48px 24px; text-align: center; color: var(--muted); font-size: 14px;
+    }
+
+    /* ── LOADING ── */
+    #auth-loading {
+      position: fixed; inset: 0; background: var(--bg); display: flex;
+      align-items: center; justify-content: center; flex-direction: column; gap: 16px; z-index: 99;
+    }
+    .spin { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div id="auth-loading">
+  <div class="spin"></div>
+  <div style="color:var(--muted);font-size:13px">Verificando sesión...</div>
+</div>
+
+<div id="app" style="display:none">
+
+  <!-- HEADER -->
+  <div class="adm-header">
+    <div class="adm-title">⚙️ Admin Panel</div>
+    <span class="adm-user" id="user-email"></span>
+    <a href="index.html" class="btn-hdr btn-back">← Volver al prode</a>
+    <button class="btn-hdr btn-logout" onclick="doLogout()">Cerrar sesión</button>
+  </div>
+
+  <!-- SEASON NAV -->
+  <div class="snav">
+    <button class="snav-btn active" data-sid="s2026a" onclick="selectSeason('s2026a',this)">Apertura 2026</button>
+    <button class="snav-btn" data-sid="s2025c" onclick="selectSeason('s2025c',this)">Clausura 2025</button>
+    <button class="snav-btn" data-sid="s2025a" onclick="selectSeason('s2025a',this)">Apertura 2025</button>
+    <button class="snav-btn" data-sid="s2024" onclick="selectSeason('s2024',this)">Liga 2024</button>
+  </div>
+
+  <!-- BODY -->
+  <div class="adm-body">
+
+    <!-- FECHAS LIST -->
+    <div class="fechas-panel">
+      <h2>Fechas de la temporada</h2>
+      <div id="fechas-list"></div>
+    </div>
+
+    <!-- EDIT PANEL -->
+    <div class="edit-panel">
+      <h2>Editar fecha</h2>
+      <div id="ef-source" class="ef-source">← Seleccioná una fecha para editar</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label>Número / Nombre</label>
+          <input id="ef-num" class="adm-input" type="text" placeholder="ej: 9  ó  Final">
+        </div>
+        <div>
+          <label>Premio total ($)</label>
+          <input id="ef-monto" class="adm-input" type="number" placeholder="ej: 146000" oninput="updatePreview()">
+          <div class="input-hint">Suma entre todos los ganadores</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label>Ganadores (uno por línea)</label>
+          <textarea id="ef-g" class="adm-textarea" placeholder="Santiago Spannagel&#10;Matias Muller" oninput="updatePreview()"></textarea>
+        </div>
+        <div>
+          <label>Perdedores (uno por línea)</label>
+          <textarea id="ef-p" class="adm-textarea" placeholder="ROLO FC&#10;Jorge Alvarez"></textarea>
+        </div>
+      </div>
+
+      <div id="ef-preview" class="ef-preview"></div>
+
+      <div class="ef-actions">
+        <button id="btn-save" class="btn-save" onclick="saveEdit()">💾 Guardar</button>
+        <button id="btn-del" class="btn-del" onclick="deleteEdit()">🗑 Borrar</button>
+      </div>
+
+      <div style="border-top:1px solid var(--border);padding-top:12px">
+        <button class="btn-clear-all" onclick="clearSeasonAll()">🗑 Limpiar TODO Firebase de esta temporada</button>
+      </div>
+    </div>
+
+  </div><!-- /adm-body -->
+</div><!-- /app -->
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="js/config.js"></script>
+<script src="js/data-history.js"></script>
+<script>
+// ═══════════════════════════════
+//  STATE
+// ═══════════════════════════════
+let currentSid = 's2026a';
+let fbData = {};
+let editingKey = null;
+
+// ═══════════════════════════════
+//  AUTH CHECK
+// ═══════════════════════════════
+auth.onAuthStateChanged(user => {
+  document.getElementById('auth-loading').style.display = 'none';
+  if (!user) { window.location.href = 'index.html'; return; }
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('user-email').textContent = user.email;
+  startListener();
+});
+
+function startListener() {
+  db.ref(FB_PATH).on('value', snap => {
+    fbData = snap.val() || {};
+    renderFechas();
+  });
+}
+
+// ═══════════════════════════════
+//  SEASON
+// ═══════════════════════════════
+function selectSeason(sid, btn) {
+  currentSid = sid;
+  document.querySelectorAll('.snav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  editingKey = null;
+  clearEditForm();
+  renderFechas();
+}
+
+// ═══════════════════════════════
+//  MERGE STATIC + FIREBASE
+// ═══════════════════════════════
+function getMergedFechas(sid) {
+  const data = seasonDataMap[sid];
+  const fbSeason = fbData[sid] || {};
+
+  const merged = data.fechas.map(f => {
+    const safeKey = String(f.num).replace(/[.#$\[\]\/]/g, '_');
+    const fb = fbSeason[safeKey];
+    return {
+      num: f.num,
+      numRaw: fb ? (fb.numRaw || String(f.num)) : String(f.num),
+      safeKey,
+      g: fb ? (fb.g || []) : (f.g || []),
+      p: fb ? (fb.p || []) : (f.p || []),
+      monto: fb ? (fb.monto || 0) : (data.gmonto[f.num] || 0),
+      fromFirebase: !!fb,
+    };
+  });
+
+  // Firebase-only fechas not in static data
+  Object.entries(fbSeason).forEach(([safeKey, fd]) => {
+    const numRaw = fd.numRaw || safeKey.replace(/_/g, ' ');
+    const numKey = isNaN(numRaw) ? numRaw : Number(numRaw);
+    if (!merged.find(x => String(x.num) === String(numKey))) {
+      merged.push({ num: numKey, numRaw, safeKey, g: fd.g || [], p: fd.p || [], monto: fd.monto || 0, fromFirebase: true });
+    }
+  });
+
+  merged.sort((a, b) => {
+    const an = isNaN(a.num) ? 999 : Number(a.num);
+    const bn = isNaN(b.num) ? 999 : Number(b.num);
+    return an - bn;
+  });
+
+  return merged;
+}
+
+// ═══════════════════════════════
+//  RENDER FECHAS LIST
+// ═══════════════════════════════
+function renderFechas() {
+  const list = getMergedFechas(currentSid);
+  const data = seasonDataMap[currentSid];
+  const el = document.getElementById('fechas-list');
+
+  el.innerHTML = list.map(f => {
+    const hasData = f.g.length > 0 || f.p.length > 0;
+    const label = typeof f.num === 'number' ? `Fecha ${f.num}` : f.num;
+    const gText = f.g.length ? f.g.join(', ') : '—';
+    const pText = f.p.length ? f.p.join(', ') : '—';
+    const montoK = f.monto ? `$${Math.round(f.monto / 1000)}K` : '';
+    const badge = f.fromFirebase
+      ? '<span class="badge fb">Firebase</span>'
+      : '<span class="badge static">Estático</span>';
+    const isActive = editingKey === f.safeKey ? 'active-edit' : '';
+
+    return `<div class="frow ${isActive} ${hasData ? '' : 'no-data'}" onclick="editFecha('${f.safeKey}')">
+      <div class="frow-label">${label}</div>
+      <div class="frow-info">
+        <span class="frow-g">${gText}</span>
+        <span class="frow-sep">→</span>
+        <span class="frow-p">${pText}</span>
+      </div>
+      <div class="frow-meta">
+        <span class="frow-monto">${montoK}</span>
+        ${badge}
+      </div>
+    </div>`;
+  }).join('') +
+    `<div class="frow frow-new" onclick="newFecha()">+ Agregar nueva fecha</div>`;
+}
+
+// ═══════════════════════════════
+//  EDIT
+// ═══════════════════════════════
+function editFecha(safeKey) {
+  const list = getMergedFechas(currentSid);
+  const f = list.find(x => x.safeKey === safeKey);
+  if (!f) return;
+  editingKey = safeKey;
+
+  document.getElementById('ef-num').value = f.numRaw;
+  document.getElementById('ef-monto').value = f.monto || '';
+  document.getElementById('ef-g').value = f.g.join('\n');
+  document.getElementById('ef-p').value = f.p.join('\n');
+
+  setSource(f.fromFirebase ? `✓ Datos en Firebase` : `→ Datos estáticos (guardar para crear override)`, f.fromFirebase);
+  document.getElementById('btn-del').style.display = f.fromFirebase ? 'inline-block' : 'none';
+  updatePreview();
+  renderFechas();
+}
+
+function newFecha() {
+  editingKey = null;
+  document.getElementById('ef-num').value = '';
+  document.getElementById('ef-monto').value = '';
+  document.getElementById('ef-g').value = '';
+  document.getElementById('ef-p').value = '';
+  document.getElementById('btn-del').style.display = 'none';
+  setSource('→ Nueva fecha (se guardará solo en Firebase)', false);
+  updatePreview();
+  document.getElementById('ef-num').focus();
+  renderFechas();
+}
+
+function clearEditForm() {
+  editingKey = null;
+  document.getElementById('ef-num').value = '';
+  document.getElementById('ef-monto').value = '';
+  document.getElementById('ef-g').value = '';
+  document.getElementById('ef-p').value = '';
+  document.getElementById('ef-preview').style.display = 'none';
+  document.getElementById('btn-del').style.display = 'none';
+  setSource('← Seleccioná una fecha para editar', false);
+}
+
+function setSource(text, ok) {
+  const el = document.getElementById('ef-source');
+  el.textContent = text;
+  el.className = 'ef-source' + (ok ? ' ok' : '');
+}
+
+// ═══════════════════════════════
+//  PREVIEW
+// ═══════════════════════════════
+function updatePreview() {
+  const monto = parseInt(document.getElementById('ef-monto').value) || 0;
+  const g = document.getElementById('ef-g').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const el = document.getElementById('ef-preview');
+  if (!monto || !g.length) { el.style.display = 'none'; return; }
+  const per = Math.round(monto / g.length);
+  el.style.display = 'block';
+  el.textContent = g.length === 1
+    ? `→ Ganador recibe $\u00a0${per.toLocaleString('es-AR')},00`
+    : `→ ${g.length} ganadores · $\u00a0${per.toLocaleString('es-AR')},00 c/u  (total $\u00a0${monto.toLocaleString('es-AR')},00)`;
+}
+
+// ═══════════════════════════════
+//  SAVE
+// ═══════════════════════════════
+async function saveEdit() {
+  const numRaw = document.getElementById('ef-num').value.trim();
+  const monto  = parseInt(document.getElementById('ef-monto').value) || 0;
+  const g = document.getElementById('ef-g').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const p = document.getElementById('ef-p').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+  if (!numRaw) { alert('Ingresá el número o nombre de la fecha'); return; }
+  if (!g.length && !p.length) { alert('Ingresá al menos un ganador o perdedor'); return; }
+
+  const safeKey = numRaw.replace(/[.#$\[\]\/]/g, '_');
+  const fd = { g, p, monto, numRaw };
+
+  const btn = document.getElementById('btn-save');
+  btn.textContent = '⏳ Guardando...';
+  btn.disabled = true;
+
+  try {
+    await db.ref(`${FB_PATH}/${currentSid}/${safeKey}`).set(fd);
+    editingKey = safeKey;
+    document.getElementById('btn-del').style.display = 'inline-block';
+    setSource('✓ Guardado correctamente en Firebase', true);
+    // fbData updated by listener → renderFechas() auto-called
+  } catch (e) {
+    alert('Error guardando: ' + e.message);
+    setSource('✗ Error al guardar: ' + e.message, false);
+  }
+
+  btn.textContent = '💾 Guardar';
+  btn.disabled = false;
+}
+
+// ═══════════════════════════════
+//  DELETE ONE
+// ═══════════════════════════════
+async function deleteEdit() {
+  const numRaw = document.getElementById('ef-num').value.trim();
+  if (!numRaw) return;
+  const label = typeof numRaw === 'string' && !isNaN(numRaw) ? `Fecha ${numRaw}` : numRaw;
+  if (!confirm(`¿Eliminar datos Firebase de ${label}? Los datos estáticos originales quedan intactos.`)) return;
+
+  const safeKey = numRaw.replace(/[.#$\[\]\/]/g, '_');
+  try {
+    await db.ref(`${FB_PATH}/${currentSid}/${safeKey}`).remove();
+    editingKey = null;
+    clearEditForm();
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+// ═══════════════════════════════
+//  CLEAR ALL FOR SEASON
+// ═══════════════════════════════
+async function clearSeasonAll() {
+  const label = document.querySelector('.snav-btn.active')?.textContent?.trim() || currentSid;
+  if (!confirm(`¿Eliminar TODOS los datos Firebase de ${label}?\n\nLos datos estáticos quedan intactos. Efecto visible al recargar el prode principal.`)) return;
+  try {
+    await db.ref(`${FB_PATH}/${currentSid}`).remove();
+    clearEditForm();
+    setSource('✓ Todos los datos Firebase eliminados para esta temporada', true);
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+// ═══════════════════════════════
+//  LOGOUT
+// ═══════════════════════════════
+async function doLogout() {
+  await auth.signOut();
+  window.location.href = 'index.html';
+}
+</script>
+</body>
+</html>

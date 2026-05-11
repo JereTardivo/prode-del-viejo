@@ -178,6 +178,7 @@ function clearAdminForm() {
 //  ADMIN UI — LOGIN (Firebase Auth)
 // ═══════════════════════════════════════════════
 function showAdmin() {
+  if (auth.currentUser) { window.location.href = 'admin.html'; return; }
   document.getElementById('admin-login-modal').classList.add('open');
   document.body.style.overflow = 'hidden';
   setTimeout(() => document.getElementById('admin-email').focus(), 100);
@@ -207,7 +208,7 @@ async function doLogin() {
   try {
     await auth.signInWithEmailAndPassword(email, pass);
     _closeAdminLogin();
-    openAdminPanel();
+    window.location.href = 'admin.html';
   } catch (e) {
     errEl.textContent = 'Email o contraseña incorrectos';
     errEl.style.display = 'block';
