@@ -469,6 +469,8 @@ function getMergedFechas(sid) {
       safeKey,
       g: fb ? (fb.g || []) : (f.g || []),
       p: fb ? (fb.p || []) : (f.p || []),
+      s: fb ? (fb.s || []) : (f.s || []),
+      z: fb ? (fb.z || '') : (f.z || ''),
       monto: fb ? (fb.monto || 0) : (data.gmonto[f.num] || 0),
       fromFirebase: !!fb,
     };
@@ -479,7 +481,7 @@ function getMergedFechas(sid) {
     const numRaw = fd.numRaw || safeKey.replace(/_/g, ' ');
     const numKey = isNaN(numRaw) ? numRaw : Number(numRaw);
     if (!merged.find(x => String(x.num) === String(numKey))) {
-      merged.push({ num: numKey, numRaw, safeKey, g: fd.g || [], p: fd.p || [], monto: fd.monto || 0, fromFirebase: true });
+      merged.push({ num: numKey, numRaw, safeKey, g: fd.g || [], p: fd.p || [], s: fd.s || [], z: fd.z || '', monto: fd.monto || 0, fromFirebase: true });
     }
   });
 
