@@ -13,3 +13,4 @@ const db = firebase.database();
 const auth = firebase.auth();
 
 const FB_PATH = 'prode_fechas';
+const FB_META = 'prode_meta';

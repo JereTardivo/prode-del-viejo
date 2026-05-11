@@ -99,8 +99,15 @@
       outline: none; transition: border-color .15s;
     }
     .adm-input:focus, .adm-textarea:focus { border-color: rgba(56,189,248,.5); }
+    .adm-input:disabled, .adm-textarea:disabled { opacity: .45; cursor: not-allowed; }
     .adm-textarea { min-height: 90px; resize: vertical; }
     .input-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    /* ── CLOSED STATE ── */
+    .snav-btn[data-closed="1"]::after { content: ' 🔒'; font-size: 10px; }
+    #season-status-bar { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-radius:8px; border:1px solid; font-size:12px; font-weight:600; }
+    #btn-toggle-closed { padding:6px 12px; border-radius:7px; font-family:'Syne',sans-serif; font-size:11px; font-weight:700; cursor:pointer; border:1px solid; letter-spacing:.5px; white-space:nowrap; }
+    #fechas-closed-banner { display:none; margin-bottom:12px; padding:10px 14px; background:rgba(248,113,113,.06); border:1px solid rgba(248,113,113,.2); border-radius:8px; color:var(--red); font-size:12px; font-weight:600; }
 
     .ef-preview {
       display: none; font-size: 12px; color: var(--cyan); padding: 8px 12px;
@@ -171,12 +178,20 @@
     <!-- FECHAS LIST -->
     <div class="fechas-panel">
       <h2>Fechas de la temporada</h2>
+      <div id="fechas-closed-banner">🔒 Temporada finalizada — solo lectura</div>
       <div id="fechas-list"></div>
     </div>
 
     <!-- EDIT PANEL -->
     <div class="edit-panel">
       <h2>Editar fecha</h2>
+
+      <!-- Season status bar -->
+      <div id="season-status-bar">
+        <span id="season-status-text">🟢 Temporada activa</span>
+        <button id="btn-toggle-closed" onclick="toggleSeasonClosed()">🔒 Finalizar</button>
+      </div>
+
       <div id="ef-source" class="ef-source">← Seleccioná una fecha para editar</div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -229,6 +244,7 @@
 // ═══════════════════════════════
 let currentSid = 's2026a';
 let fbData = {};
+let metaData = {};
 let editingKey = null;
 
 // ═══════════════════════════════
@@ -247,6 +263,11 @@ function startListener() {
     fbData = snap.val() || {};
     renderFechas();
   });
+  db.ref(FB_META).on('value', snap => {
+    metaData = snap.val() || {};
+    updateSeasonStatus();
+    renderFechas();
+  });
 }
 
 // ═══════════════════════════════
@@ -258,7 +279,70 @@ function selectSeason(sid, btn) {
   btn.classList.add('active');
   editingKey = null;
   clearEditForm();
+  updateSeasonStatus();
   renderFechas();
+}
+
+function isSeasonClosed() {
+  return !!(metaData[currentSid] && metaData[currentSid].closed);
+}
+
+function updateSeasonStatus() {
+  const closed = isSeasonClosed();
+
+  // Update tab lock icons
+  document.querySelectorAll('.snav-btn').forEach(b => {
+    b.dataset.closed = (metaData[b.dataset.sid] && metaData[b.dataset.sid].closed) ? '1' : '0';
+  });
+
+  // Status bar
+  const bar  = document.getElementById('season-status-bar');
+  const text = document.getElementById('season-status-text');
+  const btn  = document.getElementById('btn-toggle-closed');
+  if (closed) {
+    bar.style.background   = 'rgba(248,113,113,.08)';
+    bar.style.borderColor  = 'rgba(248,113,113,.25)';
+    text.textContent       = '🔒 Temporada finalizada';
+    text.style.color       = 'var(--red)';
+    btn.textContent        = '🔓 Reabrir temporada';
+    btn.style.background   = 'rgba(74,222,128,.1)';
+    btn.style.borderColor  = 'rgba(74,222,128,.4)';
+    btn.style.color        = 'var(--green)';
+  } else {
+    bar.style.background   = 'rgba(74,222,128,.05)';
+    bar.style.borderColor  = 'rgba(74,222,128,.2)';
+    text.textContent       = '🟢 Temporada activa';
+    text.style.color       = 'var(--green)';
+    btn.textContent        = '🔒 Finalizar temporada';
+    btn.style.background   = 'rgba(240,192,64,.08)';
+    btn.style.borderColor  = 'rgba(240,192,64,.3)';
+    btn.style.color        = 'var(--gold)';
+  }
+
+  // Closed banner in fechas panel
+  document.getElementById('fechas-closed-banner').style.display = closed ? 'block' : 'none';
+
+  // Form controls
+  ['ef-num','ef-monto','ef-g','ef-p'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = closed;
+  });
+  document.getElementById('btn-save').style.display = closed ? 'none' : '';
+  if (closed) document.getElementById('btn-del').style.display = 'none';
+}
+
+async function toggleSeasonClosed() {
+  const closing = !isSeasonClosed();
+  const label   = document.querySelector('.snav-btn.active')?.textContent?.replace('🔒','').trim() || currentSid;
+  const msg     = closing
+    ? `¿Finalizar "${label}"?\n\nNo se podrán agregar ni editar fechas hasta reabrirla.`
+    : `¿Reabrir "${label}" para edición?`;
+  if (!confirm(msg)) return;
+  try {
+    await db.ref(`${FB_META}/${currentSid}/closed`).set(closing);
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
 }
 
 // ═══════════════════════════════
@@ -308,18 +392,19 @@ function renderFechas() {
   const data = seasonDataMap[currentSid];
   const el = document.getElementById('fechas-list');
 
-  el.innerHTML = list.map(f => {
-    const hasData = f.g.length > 0 || f.p.length > 0;
-    const label = typeof f.num === 'number' ? `Fecha ${f.num}` : f.num;
-    const gText = f.g.length ? f.g.join(', ') : '—';
-    const pText = f.p.length ? f.p.join(', ') : '—';
-    const montoK = f.monto ? `$${Math.round(f.monto / 1000)}K` : '';
-    const badge = f.fromFirebase
-      ? '<span class="badge fb">Firebase</span>'
-      : '<span class="badge static">Estático</span>';
-    const isActive = editingKey === f.safeKey ? 'active-edit' : '';
+  const closed = isSeasonClosed();
+    el.innerHTML = list.map(f => {
+      const hasData = f.g.length > 0 || f.p.length > 0;
+      const label = typeof f.num === 'number' ? `Fecha ${f.num}` : f.num;
+      const gText = f.g.length ? f.g.join(', ') : '—';
+      const pText = f.p.length ? f.p.join(', ') : '—';
+      const montoK = f.monto ? `$${Math.round(f.monto / 1000)}K` : '';
+      const badge = f.fromFirebase
+        ? '<span class="badge fb">Firebase</span>'
+        : '<span class="badge static">Estático</span>';
+      const isActive = editingKey === f.safeKey ? 'active-edit' : '';
 
-    return `<div class="frow ${isActive} ${hasData ? '' : 'no-data'}" onclick="editFecha('${f.safeKey}')">
+      return `<div class="frow ${isActive} ${hasData ? '' : 'no-data'}" onclick="editFecha('${f.safeKey}')">
       <div class="frow-label">${label}</div>
       <div class="frow-info">
         <span class="frow-g">${gText}</span>
@@ -331,8 +416,8 @@ function renderFechas() {
         ${badge}
       </div>
     </div>`;
-  }).join('') +
-    `<div class="frow frow-new" onclick="newFecha()">+ Agregar nueva fecha</div>`;
+    }).join('') +
+      (closed ? '' : `<div class="frow frow-new" onclick="newFecha()">+ Agregar nueva fecha</div>`);
 }
 
 // ═══════════════════════════════
@@ -350,7 +435,7 @@ function editFecha(safeKey) {
   document.getElementById('ef-p').value = f.p.join('\n');
 
   setSource(f.fromFirebase ? `✓ Datos en Firebase` : `→ Datos estáticos (guardar para crear override)`, f.fromFirebase);
-  document.getElementById('btn-del').style.display = f.fromFirebase ? 'inline-block' : 'none';
+  document.getElementById('btn-del').style.display = (!isSeasonClosed() && f.fromFirebase) ? 'inline-block' : 'none';
   updatePreview();
   renderFechas();
 }
