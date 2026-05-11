@@ -4,11 +4,6 @@
 let adminSeason = 's2026a';
 let cachedFB = {};
 
-// ── Firebase listener: cache all saved fechas ──
-db.ref(FB_PATH).on('value', snap => {
-  cachedFB = snap.val() || {};
-});
-
 // ── Apply a fecha record from Firebase into live data ──
 function applyFecha(sid, numStr, fd) {
   const data = seasonDataMap[sid];
@@ -32,8 +27,8 @@ function applyFecha(sid, numStr, fd) {
 // ── Start real-time Firebase listener ──
 function startFirebaseListener() {
   db.ref(FB_PATH).on('value', snapshot => {
-    const all = snapshot.val() || {};
-    Object.entries(all).forEach(([sid, fechas]) => {
+    cachedFB = snapshot.val() || {};
+    Object.entries(cachedFB).forEach(([sid, fechas]) => {
       Object.entries(fechas).forEach(([numStr, fd]) => applyFecha(sid, numStr, fd));
     });
     rebuildCurrentSeasons();
@@ -81,12 +76,20 @@ async function saveFecha() {
   const gRaw = document.getElementById('af-ganadores').value;
   const pRaw = document.getElementById('af-perdedores').value;
   if (!numRaw) { alert('Ingresá el número o nombre de la fecha'); return; }
+  if (!gRaw.trim() && !pRaw.trim()) { alert('Ingresá al menos un ganador o perdedor'); return; }
   const g = gRaw.split('\n').map(s => s.trim()).filter(Boolean);
   const p = pRaw.split('\n').map(s => s.trim()).filter(Boolean);
   const safeKey = numRaw.replace(/[.#$\[\]\/]/g, '_');
+  const fd = { g, p, monto, numRaw };
   setAdminLoading(true);
   try {
-    await db.ref(`${FB_PATH}/${adminSeason}/${safeKey}`).set({ g, p, monto, numRaw });
+    await db.ref(`${FB_PATH}/${adminSeason}/${safeKey}`).set(fd);
+    // Apply immediately — don't wait for Firebase listener round-trip
+    if (!cachedFB[adminSeason]) cachedFB[adminSeason] = {};
+    cachedFB[adminSeason][safeKey] = fd;
+    applyFecha(adminSeason, numRaw, fd);
+    rebuildCurrentSeasons();
+    refreshSavedList();
     const msg = document.getElementById('admin-save-msg');
     msg.style.display = 'block';
     setTimeout(() => msg.style.display = 'none', 2500);
@@ -103,18 +106,52 @@ async function deleteFecha(numStr) {
   const safeKey = numStr.replace(/[.#$\[\]\/]/g, '_');
   try {
     await db.ref(`${FB_PATH}/${adminSeason}/${safeKey}`).remove();
+    if (cachedFB[adminSeason]) delete cachedFB[adminSeason][safeKey];
     const data = seasonDataMap[adminSeason];
     const numKey = isNaN(numStr) ? numStr : Number(numStr);
     const idx = data.fechas.findIndex(f => String(f.num) === String(numKey));
     if (idx > -1) { data.fechas[idx].g = []; data.fechas[idx].p = []; }
+    rebuildCurrentSeasons();
+    refreshSavedList();
   } catch (e) {
     alert('Error eliminando: ' + e.message);
   }
 }
 
+// ── Clear ALL Firebase data for the current season ──
+async function clearSeasonFirebase() {
+  if (!auth.currentUser) return;
+  const label = document.querySelector(`.admin-season-btn.active`)?.textContent?.trim() || adminSeason;
+  if (!confirm(`¿Eliminar TODOS los datos Firebase de ${label}? Los datos estáticos quedan intactos pero necesitás recargar la página.`)) return;
+  try {
+    await db.ref(`${FB_PATH}/${adminSeason}`).remove();
+    delete cachedFB[adminSeason];
+    refreshSavedList();
+    alert('Datos eliminados. Recargá la página para restaurar los valores originales.');
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
 function setAdminLoading(loading) {
-  const btn = document.querySelector('[onclick="saveFecha()"]');
+  const btn = document.getElementById('btn-save-fecha');
   if (btn) btn.textContent = loading ? '⏳ Guardando...' : '💾 Guardar Fecha';
+}
+
+// ── Live preview: per-winner prize ──
+function updatePreview() {
+  const monto = parseInt(document.getElementById('af-monto').value) || 0;
+  const gRaw = document.getElementById('af-ganadores').value;
+  const g = gRaw.split('\n').map(s => s.trim()).filter(Boolean);
+  const el = document.getElementById('af-preview');
+  if (!el) return;
+  if (!monto || !g.length) { el.style.display = 'none'; return; }
+  const perWinner = Math.round(monto / g.length);
+  const abs = perWinner.toLocaleString('es-AR');
+  el.style.display = 'block';
+  el.textContent = g.length === 1
+    ? `→ Ganador recibe $\u00a0${abs},00`
+    : `→ ${g.length} ganadores · $\u00a0${abs},00 cada uno (total $\u00a0${monto.toLocaleString('es-AR')},00)`;
 }
 
 // ── Admin season selector ──
@@ -133,6 +170,8 @@ function clearAdminForm() {
   });
   const msg = document.getElementById('admin-save-msg');
   if (msg) msg.style.display = 'none';
+  const preview = document.getElementById('af-preview');
+  if (preview) preview.style.display = 'none';
 }
 
 // ═══════════════════════════════════════════════

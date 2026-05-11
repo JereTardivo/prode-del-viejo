@@ -174,9 +174,13 @@
 
         <!-- Fechas guardadas -->
         <div style="margin-bottom:20px">
-          <div
-            style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">
-            Fechas guardadas en Firebase</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Fechas guardadas en Firebase</div>
+            <button onclick="clearSeasonFirebase()" title="Eliminar todos los datos Firebase de esta temporada"
+              style="padding:4px 10px;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.25);border-radius:6px;color:var(--red);font-family:'Syne',sans-serif;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">
+              🗑 Limpiar temporada
+            </button>
+          </div>
           <div id="admin-saved-list" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px"></div>
         </div>
 
@@ -189,25 +193,25 @@
               <input id="af-num" type="text" placeholder="ej: 13  ó  8vo Final" class="admin-input">
             </div>
             <div>
-              <div class="admin-label">Premio ganador ($)</div>
-              <input id="af-monto" type="number" placeholder="ej: 139000" class="admin-input">
+              <div class="admin-label">Premio total ($) <span style="color:var(--muted);font-weight:400;letter-spacing:0">(suma entre todos los ganadores)</span></div>
+              <input id="af-monto" type="number" placeholder="ej: 139000" class="admin-input" oninput="updatePreview()">
             </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
             <div>
               <div class="admin-label">Ganadores (uno por línea)</div>
               <textarea id="af-ganadores" class="admin-textarea"
-                placeholder="Santiago Spannagel&#10;Matias Muller"></textarea>
+                placeholder="Santiago Spannagel&#10;Matias Muller" oninput="updatePreview()"></textarea>
             </div>
             <div>
               <div class="admin-label">Perdedores (uno por línea)</div>
               <textarea id="af-perdedores" class="admin-textarea" placeholder="ROLO FC&#10;Jorge Alvarez"></textarea>
             </div>
           </div>
-          <div id="admin-save-msg" style="display:none;color:var(--green);font-size:13px;margin-bottom:10px">✓ Guardado
-            correctamente</div>
+          <div id="af-preview" style="display:none;color:var(--cyan);font-size:12px;margin-bottom:8px;padding:6px 10px;background:rgba(56,189,248,0.07);border-radius:6px;border:1px solid rgba(56,189,248,0.2)"></div>
+          <div id="admin-save-msg" style="display:none;color:var(--green);font-size:13px;margin-bottom:10px">✓ Guardado correctamente</div>
           <div style="display:flex;gap:10px">
-            <button onclick="saveFecha()"
+            <button id="btn-save-fecha" onclick="saveFecha()"
               style="flex:1;padding:11px;background:linear-gradient(135deg,rgba(74,222,128,0.15),rgba(74,222,128,0.05));border:1px solid rgba(74,222,128,0.4);border-radius:10px;color:var(--green);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer">
               💾 Guardar Fecha
             </button>
