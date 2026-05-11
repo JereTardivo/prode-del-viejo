@@ -7,9 +7,45 @@ function fmtM(v) {
 }
 
 // ═══════════════════════════════════════════════
+//  COMPUTE ROWS + SALDO DYNAMICALLY FROM FECHAS
+// ═══════════════════════════════════════════════
+function computeRowsFromFechas(sid, data) {
+  const penK = (data.penalidad || 20000) / 1000;
+  const feeK = (data.baseFee   ||  7000) / 1000;
+  const zK   = 50; // +$50K fixed for último con 0 puntos
+  // Apertura 2026: Joaquin Sassi didn't play fechas 1-9 (first 9 entries)
+  const skipRule = (sid === 's2026a') ? { 'Joaquin Sassi': 9 } : {};
+
+  data.rows = data.participants.map(({ name }) => {
+    const skip = skipRule[name] || 0;
+    const f = data.fechas.map((fecha, i) => {
+      const hasData = (fecha.g && fecha.g.length) || (fecha.p && fecha.p.length);
+      if (!hasData) return 0;
+      if (i < skip) return 0;
+      const monto = data.gmonto[fecha.num] || 0;
+      if (fecha.g && fecha.g.includes(name)) return Math.round(monto / fecha.g.length / 1000);
+      if (fecha.p && fecha.p.includes(name)) return -penK;
+      if (fecha.s && fecha.s.includes(name)) return 0;
+      if (fecha.z && fecha.z === name) return zK;
+      return -feeK;
+    });
+    return { name, f };
+  });
+
+  // Keep participants saldo / primero / ultimo in sync
+  data.participants.forEach(p => {
+    const row = data.rows.find(r => r.name === p.name);
+    p.saldo   = row ? row.f.reduce((s, v) => s + v * 1000, 0) : 0;
+    p.primero = data.fechas.reduce((c, f) => c + (f.g && f.g.includes(p.name) ? 1 : 0), 0);
+    p.ultimo  = data.fechas.reduce((c, f) => c + (f.p && f.p.includes(p.name) ? 1 : 0), 0);
+  });
+}
+
+// ═══════════════════════════════════════════════
 //  BUILD SEASON — renders all tabs for a season
 // ═══════════════════════════════════════════════
 function buildSeason(sid, data, prefix) {
+  computeRowsFromFechas(sid, data);
   const p = data.participants;
   const sorted = [...p].sort((a, b) => b.saldo - a.saldo);
   const maxAbs = Math.max(...p.map(x => Math.abs(x.saldo)));
